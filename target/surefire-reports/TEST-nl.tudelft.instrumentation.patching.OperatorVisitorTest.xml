@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuite tests="17" failures="0" name="nl.tudelft.instrumentation.patching.OperatorVisitorTest" time="0.595" errors="0" skipped="0">
+<testsuite tests="17" failures="0" name="nl.tudelft.instrumentation.patching.OperatorVisitorTest" time="0.382" errors="0" skipped="0">
   <properties>
     <property name="java.runtime.name" value="OpenJDK Runtime Environment"/>
     <property name="java.vm.version" value="17.0.5+8-Ubuntu-2ubuntu122.04"/>
@@ -57,21 +57,21 @@
     <property name="sun.cpu.endian" value="little"/>
     <property name="sun.stdout.encoding" value="UTF-8"/>
   </properties>
-  <testcase classname="nl.tudelft.instrumentation.patching.OperatorVisitorTest" name="nl.tudelft.instrumentation.patching.OperatorVisitorTest.testInstrumentationShouldAddImport" time="0.485"/>
+  <testcase classname="nl.tudelft.instrumentation.patching.OperatorVisitorTest" name="nl.tudelft.instrumentation.patching.OperatorVisitorTest.testInstrumentationShouldAddImport" time="0.277"/>
   <testcase classname="nl.tudelft.instrumentation.patching.OperatorVisitorTest" name="nl.tudelft.instrumentation.patching.OperatorVisitorTest.testInstrumentationShouldCreatCallMethod" time="0.01"/>
-  <testcase classname="nl.tudelft.instrumentation.patching.OperatorVisitorTest" name="nl.tudelft.instrumentation.patching.OperatorVisitorTest.testInstrumentationShouldInsertImplements" time="0.009"/>
-  <testcase classname="nl.tudelft.instrumentation.patching.OperatorVisitorTest" name="nl.tudelft.instrumentation.patching.OperatorVisitorTest.testInstrumentationShouldAddSequence" time="0.011"/>
+  <testcase classname="nl.tudelft.instrumentation.patching.OperatorVisitorTest" name="nl.tudelft.instrumentation.patching.OperatorVisitorTest.testInstrumentationShouldInsertImplements" time="0.01"/>
+  <testcase classname="nl.tudelft.instrumentation.patching.OperatorVisitorTest" name="nl.tudelft.instrumentation.patching.OperatorVisitorTest.testInstrumentationShouldAddSequence" time="0.009"/>
   <testcase classname="nl.tudelft.instrumentation.patching.OperatorVisitorTest" name="nl.tudelft.instrumentation.patching.OperatorVisitorTest.testInstrumentationShouldAddSetSequence" time="0.009"/>
-  <testcase classname="nl.tudelft.instrumentation.patching.OperatorVisitorTest" name="nl.tudelft.instrumentation.patching.OperatorVisitorTest.testEqualsOperatorShouldCreateMyOperatorCall" time="0.013"/>
+  <testcase classname="nl.tudelft.instrumentation.patching.OperatorVisitorTest" name="nl.tudelft.instrumentation.patching.OperatorVisitorTest.testEqualsOperatorShouldCreateMyOperatorCall" time="0.01"/>
   <testcase classname="nl.tudelft.instrumentation.patching.OperatorVisitorTest" name="nl.tudelft.instrumentation.patching.OperatorVisitorTest.testNotEqualsOperatorShouldCreateMyOperatorCall" time="0.006"/>
-  <testcase classname="nl.tudelft.instrumentation.patching.OperatorVisitorTest" name="nl.tudelft.instrumentation.patching.OperatorVisitorTest.testGTOperatorShouldCreateMyOperatorCall" time="0.006"/>
+  <testcase classname="nl.tudelft.instrumentation.patching.OperatorVisitorTest" name="nl.tudelft.instrumentation.patching.OperatorVisitorTest.testGTOperatorShouldCreateMyOperatorCall" time="0.007"/>
   <testcase classname="nl.tudelft.instrumentation.patching.OperatorVisitorTest" name="nl.tudelft.instrumentation.patching.OperatorVisitorTest.testGEOperatorShouldCreateMyOperatorCall" time="0.005"/>
   <testcase classname="nl.tudelft.instrumentation.patching.OperatorVisitorTest" name="nl.tudelft.instrumentation.patching.OperatorVisitorTest.testLTOperatorShouldCreateMyOperatorCall" time="0.005"/>
   <testcase classname="nl.tudelft.instrumentation.patching.OperatorVisitorTest" name="nl.tudelft.instrumentation.patching.OperatorVisitorTest.testLEOperatorShouldCreateMyOperatorCall" time="0.005"/>
   <testcase classname="nl.tudelft.instrumentation.patching.OperatorVisitorTest" name="nl.tudelft.instrumentation.patching.OperatorVisitorTest.testInstrumentationShouldAddImplementToClass" time="0.005"/>
   <testcase classname="nl.tudelft.instrumentation.patching.OperatorVisitorTest" name="nl.tudelft.instrumentation.patching.OperatorVisitorTest.testInstrumentationShouldAddImportForCallable" time="0.005"/>
-  <testcase classname="nl.tudelft.instrumentation.patching.OperatorVisitorTest" name="nl.tudelft.instrumentation.patching.OperatorVisitorTest.testInstrumentationShouldCreateCallMethod" time="0.005"/>
+  <testcase classname="nl.tudelft.instrumentation.patching.OperatorVisitorTest" name="nl.tudelft.instrumentation.patching.OperatorVisitorTest.testInstrumentationShouldCreateCallMethod" time="0.004"/>
   <testcase classname="nl.tudelft.instrumentation.patching.OperatorVisitorTest" name="nl.tudelft.instrumentation.patching.OperatorVisitorTest.testInstrumentationShouldCreateSetSequenceMethod" time="0.005"/>
-  <testcase classname="nl.tudelft.instrumentation.patching.OperatorVisitorTest" name="nl.tudelft.instrumentation.patching.OperatorVisitorTest.testInstrumentationShouldCreateSequenceAttribute" time="0.005"/>
+  <testcase classname="nl.tudelft.instrumentation.patching.OperatorVisitorTest" name="nl.tudelft.instrumentation.patching.OperatorVisitorTest.testInstrumentationShouldCreateSequenceAttribute" time="0.004"/>
   <testcase classname="nl.tudelft.instrumentation.patching.OperatorVisitorTest" name="nl.tudelft.instrumentation.patching.OperatorVisitorTest.testInstrumentationShouldCreateRunCall" time="0.006"/>
 </testsuite>

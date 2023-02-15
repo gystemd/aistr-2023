@@ -40,11 +40,30 @@ public class FuzzingLab {
                                         return computeDistanceAndOp(condition);
                                 case "==":
                                         return computeDistanceEquals(condition);
+                                case "!=":
+                                        return computeDistanceNotEqual(condition);
                                 default: break;
                         }
+                } else if (condition.type == TypeEnum.UNARY) {
+                        if (Objects.equals(condition.operator, "!")) {
+                                return 1 - computeDistance(condition.left);
+                        }
+                } else if (condition.type == TypeEnum.BOOL) {
+                        return condition.value ? 0 : 1;
                 }
                 return 0;
 
+        }
+
+        private static int computeDistanceNotEqual(MyVar condition) {
+                if (condition.left.type == TypeEnum.INT) {
+                        return condition.left.int_value != condition.right.int_value ? 0 : 1;
+                } else if (condition.left.type == TypeEnum.STRING) {
+                        return !condition.left.str_value.equals(condition.right.str_value) ? 0 : 1;
+                } else if (condition.left.type == TypeEnum.BOOL) {
+                        return condition.left.value != condition.right.value  ? 0 : 1;
+                }
+                return 0;
         }
 
         // Calculate distance for (a == b) : d = abs(a-b)

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuite tests="14" failures="0" name="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest" time="0.096" errors="0" skipped="0">
+<testsuite tests="14" failures="0" name="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest" time="0.078" errors="0" skipped="0">
   <properties>
     <property name="java.runtime.name" value="OpenJDK Runtime Environment"/>
     <property name="java.vm.version" value="17.0.5+8-Ubuntu-2ubuntu122.04"/>
@@ -57,18 +57,18 @@
     <property name="sun.cpu.endian" value="little"/>
     <property name="sun.stdout.encoding" value="UTF-8"/>
   </properties>
-  <testcase classname="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest" name="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest.testSimpleIfShouldCreateOneMyIfMethodCall" time="0.001"/>
-  <testcase classname="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest" name="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest.testSimpleIfShouldCreateTwoMyVars" time="0.005"/>
-  <testcase classname="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest" name="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest.testNestedIfShouldCreateTwoMyIfCalls" time="0.007"/>
-  <testcase classname="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest" name="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest.testSimpleIfShouldCreateOneUnaryExpression" time="0.009"/>
-  <testcase classname="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest" name="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest.testEqualsShouldConvertToMyVarEquals" time="0.007"/>
-  <testcase classname="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest" name="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest.testManyComparisonsInIfCreatesManyBinaryExpressions" time="0.007"/>
-  <testcase classname="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest" name="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest.testInstrumentationShouldAddImport" time="0.006"/>
+  <testcase classname="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest" name="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest.testSimpleIfShouldCreateOneMyIfMethodCall" time="0"/>
+  <testcase classname="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest" name="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest.testSimpleIfShouldCreateTwoMyVars" time="0.006"/>
+  <testcase classname="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest" name="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest.testNestedIfShouldCreateTwoMyIfCalls" time="0.005"/>
+  <testcase classname="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest" name="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest.testSimpleIfShouldCreateOneUnaryExpression" time="0.006"/>
+  <testcase classname="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest" name="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest.testEqualsShouldConvertToMyVarEquals" time="0.005"/>
+  <testcase classname="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest" name="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest.testManyComparisonsInIfCreatesManyBinaryExpressions" time="0.006"/>
+  <testcase classname="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest" name="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest.testInstrumentationShouldAddImport" time="0.005"/>
   <testcase classname="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest" name="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest.testInstrumentationShouldAddImplementToClass" time="0.007"/>
-  <testcase classname="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest" name="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest.testInstrumentationShouldAddImportForCallable" time="0.008"/>
-  <testcase classname="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest" name="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest.testInstrumentationShouldCreateCallMethod" time="0.01"/>
-  <testcase classname="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest" name="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest.testInstrumentationShouldCreateSetSequenceMethod" time="0.007"/>
-  <testcase classname="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest" name="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest.testInstrumentationShouldCreateSequenceAttribute" time="0.007"/>
-  <testcase classname="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest" name="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest.testInstrumentationShouldCreateRunCall" time="0.008"/>
-  <testcase classname="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest" name="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest.testSimpleIfShouldCreateOneBinaryExpression" time="0.007"/>
+  <testcase classname="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest" name="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest.testInstrumentationShouldAddImportForCallable" time="0.007"/>
+  <testcase classname="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest" name="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest.testInstrumentationShouldCreateCallMethod" time="0.006"/>
+  <testcase classname="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest" name="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest.testInstrumentationShouldCreateSetSequenceMethod" time="0.008"/>
+  <testcase classname="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest" name="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest.testInstrumentationShouldCreateSequenceAttribute" time="0.006"/>
+  <testcase classname="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest" name="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest.testInstrumentationShouldCreateRunCall" time="0.006"/>
+  <testcase classname="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest" name="nl.tudelft.instrumentation.fuzzing.DistanceVisitorTest.testSimpleIfShouldCreateOneBinaryExpression" time="0.005"/>
 </testsuite>
