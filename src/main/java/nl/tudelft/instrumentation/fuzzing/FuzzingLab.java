@@ -21,8 +21,41 @@ public class FuzzingLab {
          * Write your solution that specifies what should happen when a new branch has been found.
          */
         static void encounteredNewBranch(MyVar condition, boolean value, int line_nr) {
+                int d = computeDistance(condition);
+
                 // do something useful
                 System.out.println(condition.toString());
+                System.out.println(d);
+        }
+
+        // P1 && P2 : d = d(p1) + d(p2)
+        private static int computeDistanceAndOp(MyVar condition) {
+                return computeDistance(condition.left) + computeDistance(condition.right);
+        }
+
+        private static int computeDistance(MyVar condition) {
+                if (condition.type == TypeEnum.BINARY) {
+                        switch (condition.operator) {
+                                case "&&":
+                                        return computeDistanceAndOp(condition);
+                                case "==":
+                                        return computeDistanceEquals(condition);
+                                default: break;
+                        }
+                }
+                return 0;
+
+        }
+
+        // Calculate distance for (a == b) : d = abs(a-b)
+        private static int computeDistanceEquals(MyVar condition) {
+                if (condition.left.type == TypeEnum.INT) {
+                        return Math.abs(condition.left.int_value - condition.right.int_value);
+                } else if (condition.left.type == TypeEnum.STRING) {
+                        // How to compare strings?
+                        return 0;
+                }
+                return 0;
         }
 
         /**
