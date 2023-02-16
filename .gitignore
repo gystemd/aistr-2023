@@ -24,3 +24,9 @@ Thumbs.db
 *.iml
 target/
 instrumented
+instrumented/
+instrumented_fuzzing/
+instrumented_symbolic/
+RERS/
+scripts/
+*.zip
