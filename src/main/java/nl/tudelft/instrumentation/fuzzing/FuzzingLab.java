@@ -26,7 +26,7 @@ public class FuzzingLab {
          */
         static void encounteredNewBranch(MyVar condition, boolean value, int line_nr) {
                 double d = computeDistance(condition);
-                d = (double) d / (d + 1); // normalize to [0,1]
+//                d = d / (d + 1); // normalize to [0,1]
 
                 if (value) {
                         trueBranches.add(line_nr);
@@ -39,51 +39,106 @@ public class FuzzingLab {
                 currentTraceBranches.add(line_nr);
         }
 
-        // P1 && P2 : d = d(p1) + d(p2)
-        private static int computeDistanceAndOp(MyVar condition) {
-                return computeDistance(condition.left) + computeDistance(condition.right);
-        }
 
-        private static int computeDistance(MyVar condition) {
-                if (condition.type == TypeEnum.BINARY) {
-                        switch (condition.operator) {
-                                case "&&":
-                                        return computeDistanceAndOp(condition);
-                                case "==":
-                                        return computeDistanceEquals(condition);
-                                case "!=":
-                                        return computeDistanceNotEqual(condition);
-                                default:
-                                        break;
-                        }
-                } else if (condition.type == TypeEnum.UNARY) {
-                        if (Objects.equals(condition.operator, "!")) {
-                                return 1 - computeDistance(condition.left);
-                        }
-                } else if (condition.type == TypeEnum.BOOL) {
-                        return condition.value ? 0 : 1;
+        public static double computeDistance(MyVar condition) {
+                double distance = 0;
+                switch (condition.type) {
+                        case BOOL:
+                                distance = condition.value ? 0 : 1;
+                                break;
+                        case INT:
+                                distance = condition.int_value;
+                                break;
+                        case STRING:
+                                // Sum of all the chars values??
+                                for (int i = 0; i < condition.str_value.length(); i++) {
+                                        distance += condition.str_value.charAt(i);
+                                }
+                                break;
+                        case UNARY:
+                                distance = computeUnaryDistance(condition);
+                                break;
+                        case BINARY:
+                                distance = computeBinaryDistance(condition);
+                                break;
+                        default:
+                                System.out.println("Unknown branch type: " + condition.type);
                 }
-                return 0;
 
+                return distance / (distance + 1);
         }
 
-        private static int computeDistanceNotEqual(MyVar condition) {
-                if (condition.left.type == TypeEnum.INT) {
-                        return condition.left.int_value != condition.right.int_value ? 0 : 1;
-                } else if (condition.left.type == TypeEnum.STRING) {
-                        return !condition.left.str_value.equals(condition.right.str_value) ? 0 : 1;
-                } else if (condition.left.type == TypeEnum.BOOL) {
-                        return condition.left.value != condition.right.value ? 0 : 1;
+        private static double computeBinaryDistance(MyVar condition) {
+                double left = computeDistance(condition.left);
+                double right = computeDistance(condition.right);
+                switch (condition.operator) {
+                        // a == b : d = abs(a-b)
+                        case "==":
+                                return computeDistanceEquals(condition);
+                        // a < b : d = {0 if a < b; a-b + K otherwise}
+                        case "!=":
+                                return computeDistanceNotEqual(condition);
+                        // a < b : d = {0 if a < b; a-b + K otherwise}
+                        case "<":
+                                //Let k be 1 for now? Can we optimize this?
+                                return condition.left.int_value < condition.right.int_value ? 0.0 :
+                                        condition.left.int_value - condition.right.int_value + 1;
+                        // a <= b : d = {0 if a <= b; a-b otherwise}
+                        case "<=":
+                                return condition.left.int_value <= condition.right.int_value ? 0.0 :
+                                        condition.left.int_value - condition.right.int_value + 1;
+                        // a > b : d = {0 if a > b; b-a+K otherwise}
+                        case ">":
+                                return condition.left.int_value > condition.right.int_value ? 0.0 :
+                                        condition.right.int_value - condition.left.int_value + 1;
+                        // a >= b : b = {0 if a >= b; b - a otherwise}
+                        case ">=": return condition.left.int_value >= condition.right.int_value ?
+                                0.0 : condition.right.int_value - condition.left.int_value + 1;
+                        // P1 | P2 : d = min(d(P1), d(p2))
+                        case "||": return Math.min(left, right);
+                        // P1 && P2 : d = d(p1) + d(p2)
+                        case "&&": return left + right;
+                        default:
+                                System.out.println("Unkown operator: " + condition.operator);
+                                return 0;
+
+                }
+        }
+
+        private static double computeUnaryDistance(MyVar condition) {
+                if (condition.left.type == TypeEnum.BOOL && condition.left.left == null) {
+                        return condition.left.value ? 1 : 0;
+                } else {
+                        double distance = computeDistance(condition.left);
+                        return 1-distance;
+                }
+        }
+
+        private static double computeDistanceNotEqual(MyVar condition) {
+                switch (condition.left.type) {
+                        case INT:
+                                return condition.left.int_value != condition.right.int_value ? 0 : 1;
+                        case STRING:
+                                return !condition.left.str_value.equals(condition.right.str_value) ? 0 : 1;
+                        case BOOL:
+                                return condition.left.value != condition.right.value ? 0 : 1;
+                        default:
+                                System.out.println("Unknown type for not equals: " + condition);
                 }
                 return 0;
         }
 
         // Calculate distance for (a == b) : d = abs(a-b)
-        private static int computeDistanceEquals(MyVar condition) {
-                if (condition.left.type == TypeEnum.INT) {
-                        return Math.abs(condition.left.int_value - condition.right.int_value);
-                } else if (condition.left.type == TypeEnum.STRING) {
-                        return editDistance(condition.left.str_value, condition.right.str_value);
+        private static double computeDistanceEquals(MyVar condition) {
+                switch (condition.left.type) {
+                        case INT:
+                                return Math.abs(condition.left.int_value - condition.right.int_value);
+                        case STRING:
+                                return editDistance(condition.left.str_value, condition.right.str_value);
+                        case BOOL:
+                                return condition.left.value == condition.right.value ? 0.0 : 1.0;
+                        default:
+                                System.out.println("Unknown type for equals: " + condition);
                 }
                 return 0;
         }
@@ -110,7 +165,7 @@ public class FuzzingLab {
 
         /**
          * Method for fuzzing new inputs for a program.
-         * 
+         *
          * @param inputSymbols the inputSymbols to fuzz from.
          * @return a fuzzed sequence
          */
@@ -126,7 +181,7 @@ public class FuzzingLab {
 
         /**
          * Generate a random trace from an array of symbols.
-         * 
+         *
          * @param symbols the symbols from which a trace should be generated from.
          * @return a random trace that is generated from the given symbols.
          */
@@ -165,7 +220,7 @@ public class FuzzingLab {
         /**
          * Method that is used for catching the output from standard out. You should write your own
          * logic here.
-         * 
+         *
          * @param out the string that has been outputted in the standard out.
          */
         public static void output(String out) {
