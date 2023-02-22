@@ -267,25 +267,25 @@ public class FuzzingLab {
          * Generate mutations based on the current best trace.
          */
         private static void generateAlternatives() {
-                for (int i = 0; i < 20; i++) {
+                for (int i = 0; i < 100; i++) {
                         List<String> trace = new ArrayList<>(currentBestTrace);
                         double next = r.nextDouble();
                         if (next >= 0.66) {
-                                // 0.25 chance of removing random character
+                                // 0.33 chance of removing random character
                                 trace.remove(r.nextInt(currentBestTrace.size()));
                                 queue.add(trace);
                                 break;
-                        }
-                        if (next >= 0.33) {
-                                // 0.25 chance of replacing random character
+                        } else if (next >= 0.33) {
+                                // 0.33 chance of replacing random character
                                 trace.set(r.nextInt(trace.size()),
                                         DistanceTracker.inputSymbols[r.nextInt(DistanceTracker.inputSymbols.length)]);
                                 queue.add(trace);
                                 break;
+                        } else {
+                                // Else add a random symbol
+                                trace.add(DistanceTracker.inputSymbols[r.nextInt(DistanceTracker.inputSymbols.length)]);
+                                queue.add(trace);
                         }
-                        // Else add a random symbol
-                        trace.add(DistanceTracker.inputSymbols[r.nextInt(DistanceTracker.inputSymbols.length)]);
-                        queue.add(trace);
                 }
         }
 
