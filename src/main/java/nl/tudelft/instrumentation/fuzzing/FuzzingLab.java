@@ -260,7 +260,7 @@ public class FuzzingLab {
                         traces.entrySet().stream().min(Map.Entry.comparingByValue()).get();
                 System.out.println("The overall best trace is " + finalTrace.getKey() + " with " +
                         "average branch distance: " + finalTrace.getValue());
-                System.out.println("In total " + errors.size() + " were discovered");
+                System.out.println("In total " + errors.size() + " errors were discovered");
         }
 
         /**
@@ -291,7 +291,8 @@ public class FuzzingLab {
 
         private static double getAverageDistance() {
                 return visitedBranches.stream()
-                        .mapToDouble(DiscoveredBranch::getOppositeBranchDistance).sum() / visitedBranches.size();
+                        .mapToDouble(DiscoveredBranch::getOppositeBranchDistance).sum()
+                / visitedBranches.size();
         }
 
         /**
