@@ -1,9 +1,5 @@
 package nl.tudelft.instrumentation.fuzzing;
 
-import jdk.internal.icu.impl.NormalizerImpl;
-import jdk.internal.net.http.common.Pair;
-import sun.jvm.hotspot.ui.tree.BooleanTreeNodeAdapter;
-
 import java.util.*;
 
 /**
@@ -11,7 +7,7 @@ import java.util.*;
  */
 public class FuzzingLab {
         static Random r = new Random();
-        static List<String> currentTrace, bestTrace;
+        static List<String> currentTrace, currentBestTrace;
         static int traceLength = 10;
         static boolean isFinished = false;
 
@@ -19,9 +15,11 @@ public class FuzzingLab {
         static Set<Integer> falseBranches = new HashSet<>();
         static Set<Integer> currentTraceBranches = new HashSet<>();
 
+        static Set<String> errors = new HashSet<>();
+
         static Set<DiscoveredBranch> visitedBranches;
 
-        static double smallestDistance = Double.MAX_VALUE;
+        static double currentSmallestDistance = Double.MAX_VALUE;
         private static final Queue<List<String>> queue = new LinkedList<>();
 
 
@@ -42,9 +40,9 @@ public class FuzzingLab {
                 } else {
                         falseBranches.add(line_nr);
                 }
-                System.out.println(condition.toString());
-                System.out.println(d);
-                System.out.println("line: " + line_nr);
+//                System.out.println(condition.toString());
+//                System.out.println(d);
+//                System.out.println("line: " + line_nr);
                 currentTraceBranches.add(line_nr);
                 visitedBranches.add(new DiscoveredBranch(line_nr, d));
         }
@@ -210,25 +208,28 @@ public class FuzzingLab {
                 Map<List<String>, Double> traces = new HashMap<>();
                 initialize(DistanceTracker.inputSymbols);
                 DistanceTracker.runNextFuzzedSequence(currentTrace.toArray(new String[0]));
-                smallestDistance = getAverageDistance(); // Calculate average distance
-                traces.put(currentTrace, smallestDistance);
-                bestTrace = currentTrace;
+                currentSmallestDistance = getAverageDistance(); // Calculate average distance
+                traces.put(currentTrace, currentSmallestDistance);
+                currentBestTrace = currentTrace;
 
                 List<String> previousBestTrace = new ArrayList<>();
 
                 /* repeat for 5 minutes */
                 long startTime = System.currentTimeMillis();
-                while (System.currentTimeMillis() - startTime < 5 * 60 * 1000) {
+                while (System.currentTimeMillis() - startTime < 1 * 60 * 1000) {
 
                         // Check if we are stuck in a local optimum?
-                        if (previousBestTrace.equals(bestTrace)) {
+                        if (previousBestTrace.equals(currentBestTrace)) {
                                 // If we are stuck in a local minimum, it's time to start
                                 // searching somewhere else.
-                                bestTrace = generateRandomTrace(DistanceTracker.inputSymbols);
                                 System.out.println("Local optimum detected, generating a new " +
                                         "starting point");
+                                currentBestTrace = generateRandomTrace(DistanceTracker.inputSymbols);
+                                DistanceTracker.runNextFuzzedSequence(currentBestTrace.toArray(new String[0]));
+                                currentSmallestDistance = getAverageDistance();
+                                traces.put(currentBestTrace, currentSmallestDistance);
                         } else {
-                                previousBestTrace = bestTrace;
+                                previousBestTrace = currentBestTrace;
                         }
 
                         // Calculate mutations
@@ -241,9 +242,9 @@ public class FuzzingLab {
                                 DistanceTracker.runNextFuzzedSequence(currentTrace.toArray(new String[0]));
                                 double distance = getAverageDistance();
                                 traces.put(currentTrace, distance);
-                                if (distance < smallestDistance) {
-                                        smallestDistance = distance;
-                                        bestTrace = currentTrace;
+                                if (distance < currentSmallestDistance) {
+                                        currentSmallestDistance = distance;
+                                        currentBestTrace = currentTrace;
                                 }
                         }
 
@@ -253,12 +254,13 @@ public class FuzzingLab {
                 System.out.println("global number of distinct branches activated: "
                                 + (trueBranches.size() + falseBranches.size()));
                 // Use different method to calculate best trace.
-                System.out.println("the latest best trace is: " + bestTrace + " with " + traces.get(bestTrace)
+                System.out.println("the latest best trace is: " + currentBestTrace + " with " + traces.get(currentBestTrace)
                                 + " average branch distance");
                 Map.Entry<List<String>, Double> finalTrace =
                         traces.entrySet().stream().min(Map.Entry.comparingByValue()).get();
                 System.out.println("The overall best trace is " + finalTrace.getKey() + " with " +
                         "average branch distance: " + finalTrace.getValue());
+                System.out.println("In total " + errors.size() + " were discovered");
         }
 
         /**
@@ -266,11 +268,11 @@ public class FuzzingLab {
          */
         private static void generateAlternatives() {
                 for (int i = 0; i < 20; i++) {
-                        List<String> trace = new ArrayList<>(bestTrace);
+                        List<String> trace = new ArrayList<>(currentBestTrace);
                         double next = r.nextDouble();
                         if (next >= 0.66) {
                                 // 0.25 chance of removing random character
-                                trace.remove(r.nextInt(bestTrace.size()));
+                                trace.remove(r.nextInt(currentBestTrace.size()));
                                 queue.add(trace);
                                 break;
                         }
@@ -300,6 +302,9 @@ public class FuzzingLab {
          */
         public static void output(String out) {
                 System.out.println(out);
+                if (out.contains("error")) {
+                        errors.add(out);
+                }
         }
 
         static class DiscoveredBranch {
