@@ -15,7 +15,7 @@ public class FuzzingLab {
         static Set<Integer> falseBranches = new HashSet<>();
         static Set<Integer> currentTraceBranches = new HashSet<>();
 
-
+        static Set<String> errors = new HashSet<>();
         static void initialize(String[] inputSymbols) {
                 // Initialise a random trace from the input symbols of the problem.
                 currentTrace = generateRandomTrace(inputSymbols);
@@ -198,7 +198,7 @@ public class FuzzingLab {
 
                 /* repeat for 5 minutes */
                 long startTime = System.currentTimeMillis();
-                while (System.currentTimeMillis() - startTime < 0.1 * 60 * 1000) {
+                while (System.currentTimeMillis() - startTime < 1 * 60 * 1000) {
                         System.out.println("Current trace: " + currentTrace);
 
                         initialize(DistanceTracker.inputSymbols);
@@ -215,6 +215,7 @@ public class FuzzingLab {
                                 + (trueBranches.size() + falseBranches.size()));
                 System.out.println("the best trace is: " + bestTrace + " with " + max
                                 + " branches activated");
+                System.out.println("In total " + errors.size() + " errors were discovered");
         }
 
         /**
@@ -225,5 +226,8 @@ public class FuzzingLab {
          */
         public static void output(String out) {
                 System.out.println(out);
+                if (out.contains("error")) {
+                        errors.add(out);
+                }
         }
 }
