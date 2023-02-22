@@ -9,9 +9,9 @@ public class FuzzingLabTest {
 
     @Test
     void testBasicUnaryNotOperator() {
-        MyVar cond = new MyVar(new MyVar(true), "!");
+        MyVar cond = new MyVar(new MyVar(false), "!");
 
-        assertEquals(FuzzingLab.computeDistance(cond), 1/2);
+        assertEquals(FuzzingLab.computeDistance(cond), 1.0/2.0);
     }
 
     @Test
