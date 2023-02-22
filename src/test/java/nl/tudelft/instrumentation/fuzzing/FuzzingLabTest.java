@@ -9,7 +9,7 @@ public class FuzzingLabTest {
 
     @Test
     void testBasicUnaryNotOperator() {
-        MyVar cond = new MyVar(new MyVar(false), "!");
+        MyVar cond = new MyVar("bla");
 
         assertEquals(FuzzingLab.computeDistance(cond), 1.0/2.0);
     }

@@ -109,7 +109,6 @@ public class FuzzingLab {
                         default:
                                 System.out.println("Unkown operator: " + condition.operator);
                                 return 0;
-
                 }
         }
 
@@ -127,7 +126,8 @@ public class FuzzingLab {
                         case INT:
                                 return condition.left.int_value != condition.right.int_value ? 0 : 1;
                         case STRING:
-                                return !condition.left.str_value.equals(condition.right.str_value) ? 0 : 1;
+                                return editDistance(condition.left.str_value,
+                                        condition.right.str_value);
                         case BOOL:
                                 return condition.left.value != condition.right.value ? 0 : 1;
                         default:
