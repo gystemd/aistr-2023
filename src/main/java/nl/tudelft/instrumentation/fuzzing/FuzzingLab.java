@@ -16,6 +16,8 @@ public class FuzzingLab {
         static Set<Integer> currentTraceBranches = new HashSet<>();
 
         static Set<String> errors = new HashSet<>();
+        private static long startTime;
+
         static void initialize(String[] inputSymbols) {
                 // Initialise a random trace from the input symbols of the problem.
                 currentTrace = generateRandomTrace(inputSymbols);
@@ -197,8 +199,8 @@ public class FuzzingLab {
                 int max = 0;
 
                 /* repeat for 5 minutes */
-                long startTime = System.currentTimeMillis();
-                while (System.currentTimeMillis() - startTime < 1 * 60 * 1000) {
+                startTime = System.currentTimeMillis();
+                while (System.currentTimeMillis() - startTime < 5 * 60 * 1000) {
                         System.out.println("Current trace: " + currentTrace);
 
                         initialize(DistanceTracker.inputSymbols);
@@ -225,8 +227,8 @@ public class FuzzingLab {
          * @param out the string that has been outputted in the standard out.
          */
         public static void output(String out) {
-                System.out.println(out);
                 if (out.contains("error")) {
+                        System.out.println(startTime + " : " + out);
                         errors.add(out);
                 }
         }
