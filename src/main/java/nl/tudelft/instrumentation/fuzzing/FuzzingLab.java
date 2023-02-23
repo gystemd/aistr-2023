@@ -22,6 +22,8 @@ public class FuzzingLab {
         static double currentSmallestDistance = Double.MAX_VALUE;
         private static final Queue<List<String>> queue = new LinkedList<>();
 
+        static long startTime;
+
 
         static void initialize(String[] inputSymbols) {
                 // Initialise a random trace from the input symbols of the problem.
@@ -215,7 +217,7 @@ public class FuzzingLab {
                 List<String> previousBestTrace = new ArrayList<>();
 
                 /* repeat for 5 minutes */
-                long startTime = System.currentTimeMillis();
+                startTime = System.currentTimeMillis();
                 while (System.currentTimeMillis() - startTime < 1 * 60 * 1000) {
 
                         // Check if we are stuck in a local optimum?
@@ -302,9 +304,10 @@ public class FuzzingLab {
          * @param out the string that has been outputted in the standard out.
          */
         public static void output(String out) {
-                System.out.println(out);
+                long runningTime = System.currentTimeMillis() - startTime;
                 if (out.contains("error")) {
                         errors.add(out);
+                        System.out.println(runningTime + " : " + out);
                 }
         }
 
