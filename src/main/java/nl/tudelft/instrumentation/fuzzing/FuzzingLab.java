@@ -35,9 +35,9 @@ public class FuzzingLab {
                 } else {
                         falseBranches.add(line_nr);
                 }
-                System.out.println(condition.toString());
-                System.out.println(d);
-                System.out.println("line: " + line_nr);
+//                System.out.println(condition.toString());
+//                System.out.println(d);
+//                System.out.println("line: " + line_nr);
                 currentTraceBranches.add(line_nr);
         }
 
