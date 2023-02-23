@@ -24,7 +24,6 @@ public class FuzzingLab {
 
         static long startTime;
 
-
         static void initialize(String[] inputSymbols) {
                 // Initialise a random trace from the input symbols of the problem.
                 currentTrace = generateRandomTrace(inputSymbols);
@@ -203,7 +202,7 @@ public class FuzzingLab {
                 return trace;
         }
 
-        static void run() {
+        static void smartFuzzer() {
                 // 1. Create random trace & evaluate the distance for this trace.
                 // 2. Create several variations of this trace
                 // 3. Evaluate each trace and see repeat
@@ -254,15 +253,46 @@ public class FuzzingLab {
                 }
 
                 System.out.println("global number of distinct branches activated: "
-                                + (trueBranches.size() + falseBranches.size()));
+                        + (trueBranches.size() + falseBranches.size()));
                 // Use different method to calculate best trace.
                 System.out.println("the latest best trace is: " + currentBestTrace + " with " + traces.get(currentBestTrace)
-                                + " average branch distance");
+                        + " average branch distance");
                 Map.Entry<List<String>, Double> finalTrace =
                         traces.entrySet().stream().min(Map.Entry.comparingByValue()).get();
                 System.out.println("The overall best trace is " + finalTrace.getKey() + " with " +
                         "average branch distance: " + finalTrace.getValue());
                 System.out.println("In total " + errors.size() + " errors were discovered");
+
+        }
+
+        static void randomFuzzer() {
+                int max = 0;
+
+                /* repeat for 5 minutes */
+                startTime = System.currentTimeMillis();
+                while (System.currentTimeMillis() - startTime < 5 * 60 * 1000) {
+                        System.out.println("Current trace: " + currentTrace);
+
+                        initialize(DistanceTracker.inputSymbols);
+                        DistanceTracker.runNextFuzzedSequence(currentTrace.toArray(new String[0]));
+
+                        if (currentTraceBranches.size() > max) {
+                                max = currentTraceBranches.size();
+                                currentBestTrace = currentTrace;
+                        }
+                        currentTraceBranches = new HashSet<>();
+                }
+
+                System.out.println("global number of distinct branches activated: "
+                        + (trueBranches.size() + falseBranches.size()));
+                System.out.println("the best trace is: " + currentBestTrace + " with " + max
+                        + " branches activated");
+                System.out.println("In total " + errors.size() + " errors were discovered");
+        }
+
+        static void run() {
+                smartFuzzer();
+//                randomFuzzer();
         }
 
         /**
@@ -322,6 +352,5 @@ public class FuzzingLab {
                double getOppositeBranchDistance() {
                        return 1 - this.branchDistance;
                }
-
         }
 }
