@@ -291,8 +291,8 @@ public class FuzzingLab {
         }
 
         static void run() {
-                smartFuzzer();
-//                randomFuzzer();
+                //smartFuzzer();
+                randomFuzzer();
         }
 
         /**
