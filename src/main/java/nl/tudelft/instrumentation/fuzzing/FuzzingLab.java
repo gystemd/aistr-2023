@@ -218,7 +218,7 @@ public class FuzzingLab {
 
                 /* repeat for 5 minutes */
                 startTime = System.currentTimeMillis();
-                while (System.currentTimeMillis() - startTime < 1 * 60 * 1000) {
+                while (System.currentTimeMillis() - startTime < 5 * 60 * 1000) {
 
                         // Check if we are stuck in a local optimum?
                         if (previousBestTrace.equals(currentBestTrace)) {
@@ -269,7 +269,7 @@ public class FuzzingLab {
          * Generate mutations based on the current best trace.
          */
         private static void generateAlternatives() {
-                for (int i = 0; i < 100; i++) {
+                for (int i = 0; i < 20; i++) {
                         List<String> trace = new ArrayList<>(currentBestTrace);
                         double next = r.nextDouble();
                         if (next >= 0.66) {
