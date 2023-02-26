@@ -283,7 +283,7 @@ public class FuzzingLab {
 
                 /* repeat for 5 minutes */
                 startTime = System.currentTimeMillis();
-                while (System.currentTimeMillis() - startTime < 5 * 60 * 1000) {
+                while (System.currentTimeMillis() - startTime < 1 * 60 * 1000) {
                         System.out.println("Current trace: " + currentTrace);
 
                         initialize(DistanceTracker.inputSymbols);
@@ -312,6 +312,33 @@ public class FuzzingLab {
          * Generate mutations based on the current best trace.
          */
         private static void generateAlternatives() {
+                for(int i =0; i<5; i++){
+                        List<String> trace = new ArrayList<>(currentBestTrace);
+                        trace.remove(r.nextInt(currentBestTrace.size()));
+                        queue.add(trace);
+                        trace = new ArrayList<>(currentBestTrace);
+                        trace.set(r.nextInt(trace.size()),
+                                        DistanceTracker.inputSymbols[r.nextInt(
+                                                        DistanceTracker.inputSymbols.length)]);
+                        queue.add(trace);
+                        trace = new ArrayList<>(currentBestTrace);
+                        trace.add(DistanceTracker.inputSymbols[r.nextInt(
+                                        DistanceTracker.inputSymbols.length)]);
+                        queue.add(trace);
+                        trace = new ArrayList<>(currentBestTrace);
+                        // swap two elements
+
+                        int index1 = r.nextInt(trace.size());
+                        int index2 = r.nextInt(trace.size());
+                        String temp = trace.get(index1);
+                        trace.set(index1, trace.get(index2));
+                        trace.set(index2, temp);
+                        queue.add(trace);
+                        trace = new ArrayList<>(currentBestTrace);
+                        Collections.shuffle(trace);
+                        queue.add(trace);
+                }
+                /*
                 for (int i = 0; i < 20; i++) {
                         List<String> trace = new ArrayList<>(currentBestTrace);
                         int choice = r.nextInt(5);
@@ -342,7 +369,7 @@ public class FuzzingLab {
                                         break;
                         }
                         queue.add(trace);
-                }
+                }*/
         }
 
         private static double getAverageDistance() {
