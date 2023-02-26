@@ -227,7 +227,7 @@ public class FuzzingLab {
 
                 /* repeat for 5 minutes */
                 startTime = System.currentTimeMillis();
-                while (System.currentTimeMillis() - startTime < 0.5 * 60 * 1000) {
+                while (System.currentTimeMillis() - startTime < 5 * 60 * 1000) {
 
                         // Check if we are stuck in a local optimum?
                         if (previousBestTrace.equals(currentBestTrace)) {
@@ -283,7 +283,7 @@ public class FuzzingLab {
 
                 /* repeat for 5 minutes */
                 startTime = System.currentTimeMillis();
-                while (System.currentTimeMillis() - startTime < 0.5 * 60 * 1000) {
+                while (System.currentTimeMillis() - startTime < 5 * 60 * 1000) {
                         System.out.println("Current trace: " + currentTrace);
 
                         initialize(DistanceTracker.inputSymbols);
@@ -304,17 +304,17 @@ public class FuzzingLab {
         }
 
         static void run() {
-                 smartFuzzer();
-                //randomFuzzer();
+                smartFuzzer();
+                // randomFuzzer();
         }
 
         /**
          * Generate mutations based on the current best trace.
          */
         private static void generateAlternatives() {
-                for (int i = 0; i < 100; i++) {
+                for (int i = 0; i < 20; i++) {
                         List<String> trace = new ArrayList<>(currentBestTrace);
-                        int choice = r.nextInt(3);
+                        int choice = r.nextInt(5);
                         switch (choice) {
                                 case 0:
                                         trace.remove(r.nextInt(currentBestTrace.size()));
@@ -328,7 +328,18 @@ public class FuzzingLab {
                                         trace.add(DistanceTracker.inputSymbols[r.nextInt(
                                                         DistanceTracker.inputSymbols.length)]);
                                         break;
-
+                                case 3:
+                                        // swap two elements
+                                        int index1 = r.nextInt(trace.size());
+                                        int index2 = r.nextInt(trace.size());
+                                        String temp = trace.get(index1);
+                                        trace.set(index1, trace.get(index2));
+                                        trace.set(index2, temp);
+                                        break;
+                                case 4:
+                                        // shuffle
+                                        Collections.shuffle(trace);
+                                        break;
                         }
                         queue.add(trace);
                 }
