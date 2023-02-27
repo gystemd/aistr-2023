@@ -374,7 +374,7 @@ public class FuzzingLab {
 
         private static double getAverageDistance() {
                 return visitedBranches.stream()
-                                .mapToDouble(DiscoveredBranch::getOppositeBranchDistance).sum()
+                                .mapToDouble(DiscoveredBranch::getBranchDistance).sum()
                                 / visitedBranches.size();
         }
 
@@ -404,7 +404,7 @@ public class FuzzingLab {
                         this.condition = condition;
                 }
 
-                double getOppositeBranchDistance() {
+                double getBranchDistance() {
                         return this.branchDistance;
                 }
 
