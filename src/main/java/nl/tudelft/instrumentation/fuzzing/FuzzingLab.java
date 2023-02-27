@@ -1,51 +1,43 @@
 package nl.tudelft.instrumentation.fuzzing;
 
 import java.util.*;
+import com.github.javaparser.utils.Pair;
 
 /**
  * You should write your own solution using this class.
  */
 public class FuzzingLab {
-        static Random r = new Random();
+        static final Random r = new Random();
+        static final int randomTimer = 5 * 60 * 1000;
+        static final int hillClimberTimer = 3 * 60 * 1000;
+        static final int mutationsNumber = 3;
+
         static List<String> currentTrace, currentBestTrace;
         static int traceLength = 10;
-        static boolean isFinished = false;
+        static double currentBranchDistanceSum = 0;
+        static int currentBranchCount = 0;
 
-        static Set<Integer> trueBranches = new HashSet<>();
-        static Set<Integer> falseBranches = new HashSet<>();
-        static Set<Integer> currentTraceBranches = new HashSet<>();
+        static Set<Pair<Integer, Boolean>> visitedBranches = new HashSet<>();
+
+        // keep tracked of the branches that have been visited in the current trace
+        static Set<Pair<Integer, Boolean>> currentTraceVisitedBranches = new HashSet<>();
 
         static Set<String> errors = new HashSet<>();
 
-        static Set<DiscoveredBranch> visitedBranches;
 
         static double currentSmallestDistance = Double.MAX_VALUE;
-        private static final Queue<List<String>> queue = new LinkedList<>();
+        private static final Queue<List<String>> mutationsQueue = new LinkedList<>();
 
         static long startTime;
 
         static void initialize(String[] inputSymbols) {
                 // Initialise a random trace from the input symbols of the problem.
                 currentTrace = generateRandomTrace(inputSymbols);
-                visitedBranches = new HashSet<>();
-        }
 
-        /**
-         * Write your solution that specifies what should happen when a new branch has been found.
-         */
-        static void encounteredNewBranch(MyVar condition, boolean value, int line_nr) {
-                double d = computeDistance(condition);
-
-                if (value) {
-                        trueBranches.add(line_nr);
-                } else {
-                        falseBranches.add(line_nr);
-                }
-//                System.out.println(condition.toString());
-//                System.out.println(d);
-//                System.out.println("line: " + line_nr);
-                currentTraceBranches.add(line_nr);
-                visitedBranches.add(new DiscoveredBranch(line_nr, d));
+                /* clear the parameters for the current trace */
+                currentTraceVisitedBranches.clear();
+                currentBranchDistanceSum = 0;
+                currentBranchCount = 0;
         }
 
 
@@ -89,24 +81,31 @@ public class FuzzingLab {
                                 return computeDistanceNotEqual(condition);
                         // a < b : d = {0 if a < b; a-b + K otherwise}
                         case "<":
-                                //Let k be 1 for now? Can we optimize this?
-                                return condition.left.int_value < condition.right.int_value ? 0.0 :
-                                        condition.left.int_value - condition.right.int_value + 1;
+                                // Let k be 1 for now? Can we optimize this?
+                                return condition.left.int_value < condition.right.int_value ? 0.0
+                                                : condition.left.int_value
+                                                                - condition.right.int_value + 1;
                         // a <= b : d = {0 if a <= b; a-b otherwise}
                         case "<=":
-                                return condition.left.int_value <= condition.right.int_value ? 0.0 :
-                                        condition.left.int_value - condition.right.int_value + 1;
+                                return condition.left.int_value <= condition.right.int_value ? 0.0
+                                                : condition.left.int_value
+                                                                - condition.right.int_value + 1;
                         // a > b : d = {0 if a > b; b-a+K otherwise}
                         case ">":
-                                return condition.left.int_value > condition.right.int_value ? 0.0 :
-                                        condition.right.int_value - condition.left.int_value + 1;
+                                return condition.left.int_value > condition.right.int_value ? 0.0
+                                                : condition.right.int_value
+                                                                - condition.left.int_value + 1;
                         // a >= b : b = {0 if a >= b; b - a otherwise}
-                        case ">=": return condition.left.int_value >= condition.right.int_value ?
-                                0.0 : condition.right.int_value - condition.left.int_value + 1;
+                        case ">=":
+                                return condition.left.int_value >= condition.right.int_value ? 0.0
+                                                : condition.right.int_value
+                                                                - condition.left.int_value + 1;
                         // P1 | P2 : d = min(d(P1), d(p2))
-                        case "||": return Math.min(left, right);
+                        case "||":
+                                return Math.min(left, right);
                         // P1 && P2 : d = d(p1) + d(p2)
-                        case "&&": return left + right;
+                        case "&&":
+                                return left + right;
                         default:
                                 System.out.println("Unkown operator: " + condition.operator);
                                 return 0;
@@ -118,17 +117,18 @@ public class FuzzingLab {
                         return condition.left.value ? 1 : 0;
                 } else {
                         double distance = computeDistance(condition.left);
-                        return 1-distance;
+                        return 1 - distance;
                 }
         }
 
         private static double computeDistanceNotEqual(MyVar condition) {
                 switch (condition.left.type) {
                         case INT:
-                                return condition.left.int_value != condition.right.int_value ? 0 : 1;
+                                return condition.left.int_value != condition.right.int_value ? 0
+                                                : 1;
                         case STRING:
                                 return editDistance(condition.left.str_value,
-                                        condition.right.str_value);
+                                                condition.right.str_value);
                         case BOOL:
                                 return condition.left.value != condition.right.value ? 0 : 1;
                         default:
@@ -141,9 +141,11 @@ public class FuzzingLab {
         private static double computeDistanceEquals(MyVar condition) {
                 switch (condition.left.type) {
                         case INT:
-                                return Math.abs(condition.left.int_value - condition.right.int_value);
+                                return Math.abs(condition.left.int_value
+                                                - condition.right.int_value);
                         case STRING:
-                                return editDistance(condition.left.str_value, condition.right.str_value);
+                                return editDistance(condition.left.str_value,
+                                                condition.right.str_value);
                         case BOOL:
                                 return condition.left.value == condition.right.value ? 0.0 : 1.0;
                         default:
@@ -171,6 +173,18 @@ public class FuzzingLab {
 
                 return dp[s1.length()][s2.length()];
         }
+
+        /**
+         * Write your solution that specifies what should happen when a new branch has been found.
+         */
+        static void encounteredNewBranch(MyVar condition, boolean value, int line_nr) {
+                double d = computeDistance(condition);
+                visitedBranches.add(new Pair<>(line_nr, value));
+                currentTraceVisitedBranches.add(new Pair<>(line_nr, value));
+                currentBranchDistanceSum += d;
+                currentBranchCount++;
+        }
+
 
         /**
          * Method for fuzzing new inputs for a program.
@@ -209,7 +223,7 @@ public class FuzzingLab {
                 Map<List<String>, Double> traces = new HashMap<>();
                 initialize(DistanceTracker.inputSymbols);
                 DistanceTracker.runNextFuzzedSequence(currentTrace.toArray(new String[0]));
-                currentSmallestDistance = getAverageDistance(); // Calculate average distance
+                currentSmallestDistance = currentBranchDistanceSum / currentBranchCount;
                 traces.put(currentTrace, currentSmallestDistance);
                 currentBestTrace = currentTrace;
 
@@ -217,31 +231,37 @@ public class FuzzingLab {
 
                 /* repeat for 5 minutes */
                 startTime = System.currentTimeMillis();
-                while (System.currentTimeMillis() - startTime < 5 * 60 * 1000) {
+                while (System.currentTimeMillis() - startTime < hillClimberTimer) {
 
                         // Check if we are stuck in a local optimum?
                         if (previousBestTrace.equals(currentBestTrace)) {
                                 // If we are stuck in a local minimum, it's time to start
                                 // searching somewhere else.
-                                System.out.println("Local optimum detected, generating a new " +
-                                        "starting point");
-                                currentBestTrace = generateRandomTrace(DistanceTracker.inputSymbols);
-                                DistanceTracker.runNextFuzzedSequence(currentBestTrace.toArray(new String[0]));
-                                currentSmallestDistance = getAverageDistance();
+                                System.out.println("Local optimum detected, generating a new "
+                                                + "starting point");
+                                currentBestTrace =
+                                                generateRandomTrace(DistanceTracker.inputSymbols);
+                                DistanceTracker.runNextFuzzedSequence(
+                                                currentBestTrace.toArray(new String[0]));
+                                currentSmallestDistance =
+                                                currentBranchDistanceSum / currentBranchCount;
                                 traces.put(currentBestTrace, currentSmallestDistance);
                         } else {
                                 previousBestTrace = currentBestTrace;
                         }
 
                         // Calculate mutations
-                        generateAlternatives();
+                        generateMutations();
 
-                        while (!queue.isEmpty()) {
-                                visitedBranches.clear();
-                                currentTrace = queue.poll();
+                        while (!mutationsQueue.isEmpty()) {
+                                currentBranchCount = 0;
+                                currentBranchDistanceSum = 0;
+                                currentTrace = mutationsQueue.poll();
+
                                 System.out.println("Current trace: " + currentTrace);
-                                DistanceTracker.runNextFuzzedSequence(currentTrace.toArray(new String[0]));
-                                double distance = getAverageDistance();
+                                DistanceTracker.runNextFuzzedSequence(
+                                                currentTrace.toArray(new String[0]));
+                                double distance = currentBranchDistanceSum / currentBranchCount;
                                 traces.put(currentTrace, distance);
                                 if (distance < currentSmallestDistance) {
                                         currentSmallestDistance = distance;
@@ -253,14 +273,14 @@ public class FuzzingLab {
                 }
 
                 System.out.println("global number of distinct branches activated: "
-                        + (trueBranches.size() + falseBranches.size()));
+                                + (visitedBranches.size()));
                 // Use different method to calculate best trace.
-                System.out.println("the latest best trace is: " + currentBestTrace + " with " + traces.get(currentBestTrace)
-                        + " average branch distance");
+                System.out.println("the latest best trace is: " + currentBestTrace + " with "
+                                + traces.get(currentBestTrace) + " average branch distance");
                 Map.Entry<List<String>, Double> finalTrace =
-                        traces.entrySet().stream().min(Map.Entry.comparingByValue()).get();
-                System.out.println("The overall best trace is " + finalTrace.getKey() + " with " +
-                        "average branch distance: " + finalTrace.getValue());
+                                traces.entrySet().stream().min(Map.Entry.comparingByValue()).get();
+                System.out.println("The overall best trace is " + finalTrace.getKey() + " with "
+                                + "average branch distance: " + finalTrace.getValue());
                 System.out.println("In total " + errors.size() + " errors were discovered");
 
         }
@@ -268,63 +288,68 @@ public class FuzzingLab {
         static void randomFuzzer() {
                 int max = 0;
 
-                /* repeat for 5 minutes */
                 startTime = System.currentTimeMillis();
-                while (System.currentTimeMillis() - startTime < 5 * 60 * 1000) {
+                while (System.currentTimeMillis() - startTime < randomTimer) {
                         System.out.println("Current trace: " + currentTrace);
 
                         initialize(DistanceTracker.inputSymbols);
                         DistanceTracker.runNextFuzzedSequence(currentTrace.toArray(new String[0]));
 
-                        if (currentTraceBranches.size() > max) {
-                                max = currentTraceBranches.size();
+                        if (currentTraceVisitedBranches.size() > max) {
+                                max = currentTraceVisitedBranches.size();
                                 currentBestTrace = currentTrace;
                         }
-                        currentTraceBranches = new HashSet<>();
+                        currentTraceVisitedBranches.clear();
                 }
 
                 System.out.println("global number of distinct branches activated: "
-                        + (trueBranches.size() + falseBranches.size()));
+                                + (visitedBranches.size()));
                 System.out.println("the best trace is: " + currentBestTrace + " with " + max
-                        + " branches activated");
+                                + " branches activated");
                 System.out.println("In total " + errors.size() + " errors were discovered");
         }
 
         static void run() {
-                //smartFuzzer();
-                randomFuzzer();
+                smartFuzzer();
+                // randomFuzzer();
         }
 
         /**
          * Generate mutations based on the current best trace.
          */
-        private static void generateAlternatives() {
-                for (int i = 0; i < 20; i++) {
+        private static void generateMutations() {
+                for (int i = 0; i < mutationsNumber; i++) {
+                        System.out.println("generating new traces");
                         List<String> trace = new ArrayList<>(currentBestTrace);
-                        double next = r.nextDouble();
-                        if (next >= 0.66) {
-                                // 0.33 chance of removing random character
-                                trace.remove(r.nextInt(currentBestTrace.size()));
-                                queue.add(trace);
-                                break;
-                        } else if (next >= 0.33) {
-                                // 0.33 chance of replacing random character
-                                trace.set(r.nextInt(trace.size()),
-                                        DistanceTracker.inputSymbols[r.nextInt(DistanceTracker.inputSymbols.length)]);
-                                queue.add(trace);
-                                break;
-                        } else {
-                                // Else add a random symbol
-                                trace.add(DistanceTracker.inputSymbols[r.nextInt(DistanceTracker.inputSymbols.length)]);
-                                queue.add(trace);
-                        }
-                }
-        }
+                        trace.remove(r.nextInt(currentBestTrace.size()));
+                        mutationsQueue.add(trace);
 
-        private static double getAverageDistance() {
-                return visitedBranches.stream()
-                        .mapToDouble(DiscoveredBranch::getOppositeBranchDistance).sum()
-                / visitedBranches.size();
+
+                        trace = new ArrayList<>(currentBestTrace);
+                        trace.set(r.nextInt(trace.size()), DistanceTracker.inputSymbols[r
+                                        .nextInt(DistanceTracker.inputSymbols.length)]);
+                        mutationsQueue.add(trace);
+
+
+                        trace = new ArrayList<>(currentBestTrace);
+                        trace.add(DistanceTracker.inputSymbols[r
+                                        .nextInt(DistanceTracker.inputSymbols.length)]);
+                        mutationsQueue.add(trace);
+
+
+                        trace = new ArrayList<>(currentBestTrace);
+                        int index1 = r.nextInt(trace.size());
+                        int index2 = r.nextInt(trace.size());
+                        String temp = trace.get(index1);
+                        trace.set(index1, trace.get(index2));
+                        trace.set(index2, temp);
+                        mutationsQueue.add(trace);
+
+
+                        trace = new ArrayList<>(currentBestTrace);
+                        Collections.shuffle(trace);
+                        mutationsQueue.add(trace);
+                }
         }
 
         /**
@@ -341,16 +366,4 @@ public class FuzzingLab {
                 }
         }
 
-        static class DiscoveredBranch {
-                private int line_nr;
-                private double branchDistance;
-               DiscoveredBranch(int line_nr, double branchDistance) {
-                       this.line_nr = line_nr;
-                       this.branchDistance = branchDistance;
-               }
-
-               double getOppositeBranchDistance() {
-                       return 1 - this.branchDistance;
-               }
-        }
 }
