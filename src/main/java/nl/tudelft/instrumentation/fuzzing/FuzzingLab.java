@@ -47,7 +47,7 @@ public class FuzzingLab {
                 // System.out.println(d);
                 // System.out.println("line: " + line_nr);
                 currentTraceBranches.add(line_nr);
-                visitedBranches.add(new DiscoveredBranch(line_nr, d));
+                visitedBranches.add(new DiscoveredBranch(line_nr, value, d));
         }
 
 
@@ -208,6 +208,7 @@ public class FuzzingLab {
          */
         static List<String> generateRandomTrace(String[] symbols) {
                 ArrayList<String> trace = new ArrayList<>();
+                traceLength = r.nextInt(1, symbols.length * 5);
                 for (int i = 0; i < traceLength; i++) {
                         trace.add(symbols[r.nextInt(symbols.length)]);
                 }
@@ -317,7 +318,8 @@ public class FuzzingLab {
          * Generate mutations based on the current best trace.
          */
         private static void generateAlternatives() {
-                for(int i =0; i<5; i++){
+                int alternativeTraces = r.nextInt(1, DistanceTracker.inputSymbols.length * 2);
+                for(int i =0; i<alternativeTraces; i++){
                         System.out.println("generating new traces");
                         List<String> trace;
                         do {
@@ -416,13 +418,25 @@ public class FuzzingLab {
                 private int line_nr;
                 private double branchDistance;
 
-                DiscoveredBranch(int line_nr, double branchDistance) {
+                private boolean condition;
+
+                DiscoveredBranch(int line_nr, boolean condition, double branchDistance) {
                         this.line_nr = line_nr;
                         this.branchDistance = branchDistance;
+                        this.condition = condition;
                 }
 
                 double getOppositeBranchDistance() {
                         return this.branchDistance;
+                }
+
+                @Override
+                public boolean equals(Object obj) {
+                        if (obj instanceof DiscoveredBranch) {
+                                return this.line_nr == ((DiscoveredBranch) obj).line_nr
+                                        && this.condition == ((DiscoveredBranch)obj).condition;
+                        }
+                        return false;
                 }
         }
 }
