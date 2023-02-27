@@ -1,21 +1,26 @@
 package nl.tudelft.instrumentation.fuzzing;
 
 import java.util.*;
-import java.util.function.Function;
+import com.github.javaparser.utils.Pair;
 
 /**
  * You should write your own solution using this class.
  */
 public class FuzzingLab {
+        static final int randomTimer = 5 * 60 * 1000;
+        static final int hillClimberTimer = 5 * 60 * 1000;
         static Random r = new Random();
+
         static List<String> currentTrace, currentBestTrace;
-        static Set<Integer> trueBranches = new HashSet<>();
-        static Set<Integer> falseBranches = new HashSet<>();
+        static int traceLength = 10;
+
+        static Set<Pair<Integer, Boolean>> uniqueVisitedBranches = new HashSet<>();
         static Set<Integer> currentTraceBranches = new HashSet<>();
 
+        /* keep track of the errors that have been found */
         static Set<String> errors = new HashSet<>();
 
-        static Set<DiscoveredBranch> visitedBranches;
+        static List<DiscoveredBranch> visitedBranches;
 
         static double currentSmallestDistance = Double.MAX_VALUE;
         private static final Queue<List<String>> queue = new LinkedList<>();
@@ -27,7 +32,7 @@ public class FuzzingLab {
         static void initialize(String[] inputSymbols) {
                 // Initialise a random trace from the input symbols of the problem.
                 currentTrace = generateRandomTrace(inputSymbols);
-                visitedBranches = new HashSet<>();
+                visitedBranches = new ArrayList<>();
         }
 
         /**
@@ -36,14 +41,7 @@ public class FuzzingLab {
         static void encounteredNewBranch(MyVar condition, boolean value, int line_nr) {
                 double d = computeDistance(condition);
 
-                if (value) {
-                        trueBranches.add(line_nr);
-                } else {
-                        falseBranches.add(line_nr);
-                }
-                // System.out.println(condition.toString());
-                // System.out.println(d);
-                // System.out.println("line: " + line_nr);
+                uniqueVisitedBranches.add(new Pair<>(line_nr, value));
                 currentTraceBranches.add(line_nr);
                 visitedBranches.add(new DiscoveredBranch(line_nr, value, d));
         }
@@ -59,7 +57,6 @@ public class FuzzingLab {
                                 distance = condition.int_value;
                                 break;
                         case STRING:
-                                // Sum of all the chars values??
                                 for (int i = 0; i < condition.str_value.length(); i++) {
                                         distance += condition.str_value.charAt(i);
                                 }
@@ -89,7 +86,6 @@ public class FuzzingLab {
                                 return computeDistanceNotEqual(condition);
                         // a < b : d = {0 if a < b; a-b + K otherwise}
                         case "<":
-                                // Let k be 1 for now? Can we optimize this?
                                 return condition.left.int_value < condition.right.int_value ? 0.0
                                                 : condition.left.int_value
                                                                 - condition.right.int_value + 1;
@@ -207,7 +203,7 @@ public class FuzzingLab {
         static List<String> generateRandomTrace(String[] symbols) {
                 ArrayList<String> trace = new ArrayList<>();
                 do {
-                        int traceLength = r.nextInt(1, symbols.length * 5);
+                        traceLength = r.nextInt(symbols.length * 5)+1;
                         for (int i = 0; i < traceLength; i++) {
                                 trace.add(symbols[r.nextInt(symbols.length)]);
                         }
@@ -233,7 +229,7 @@ public class FuzzingLab {
 
                 /* repeat for 5 minutes */
                 startTime = System.currentTimeMillis();
-                while (System.currentTimeMillis() - startTime < 5 * 60 * 1000) {
+                while (System.currentTimeMillis() - startTime < hillClimberTimer) {
 
                         // Check if we are stuck in a local optimum?
                         if (previousBestTrace.equals(currentBestTrace)) {
@@ -274,7 +270,7 @@ public class FuzzingLab {
                 }
 
                 System.out.println("global number of distinct branches activated: "
-                                + (trueBranches.size() + falseBranches.size()));
+                                + (uniqueVisitedBranches.size()));
                 // Use different method to calculate best trace.
                 System.out.println("the latest best trace is: " + currentBestTrace + " with "
                                 + traces.get(currentBestTrace) + " average branch distance");
@@ -291,7 +287,7 @@ public class FuzzingLab {
 
                 /* repeat for 5 minutes */
                 startTime = System.currentTimeMillis();
-                while (System.currentTimeMillis() - startTime < 5 * 60 * 1000) {
+                while (System.currentTimeMillis() - startTime < randomTimer) {
                         System.out.println("Current trace: " + currentTrace);
 
                         initialize(DistanceTracker.inputSymbols);
@@ -305,7 +301,7 @@ public class FuzzingLab {
                 }
 
                 System.out.println("global number of distinct branches activated: "
-                                + (trueBranches.size() + falseBranches.size()));
+                                + (uniqueVisitedBranches.size()));
                 System.out.println("the best trace is: " + currentBestTrace + " with " + max
                                 + " branches activated");
                 System.out.println("In total " + errors.size() + " errors were discovered");
@@ -316,21 +312,6 @@ public class FuzzingLab {
                 // randomFuzzer();
         }
 
-        private static void generateSpecificAlternative(int alternativeTraces,
-                                                        Function<List<String>, Object> run) {
-                int maxTries = alternativeTraces;
-                List<String> trace;
-                do {
-                        trace = new ArrayList<>(currentBestTrace);
-                        trace.remove(r.nextInt(currentBestTrace.size()));
-                        run.apply(trace);
-                        maxTries--;
-                } while (coveredTraces.contains(trace) && maxTries > 0);
-                queue.add(trace);
-                coveredTraces.add(trace);
-
-        }
-
         /**
          * Generate mutations based on the current best trace.
          */
@@ -338,54 +319,60 @@ public class FuzzingLab {
                 int alternativeTraces = DistanceTracker.inputSymbols.length;
                 for(int i =0; i<alternativeTraces; i++){
                         System.out.println("generating new traces");
+                        List<String> trace;
+                        int maxTries = alternativeTraces;
+                        do {
+                                trace = new ArrayList<>(currentBestTrace);
+                                trace.remove(r.nextInt(currentBestTrace.size()));
+                                maxTries--;
+                        } while (coveredTraces.contains(trace) && maxTries > 0);
+                        queue.add(trace);
+                        coveredTraces.add(trace);
 
-                        Function<List<String>, Object> func = currTrace -> {
-                                currTrace = new ArrayList<>(currentBestTrace);
-                                currTrace.remove(r.nextInt(currentBestTrace.size()));
-                                return null;
-                        };
-                        generateSpecificAlternative(alternativeTraces, func);
-
-
-                        func = currTrace -> {
-                                currTrace = new ArrayList<>(currentBestTrace);
-                                currTrace.set(r.nextInt(currTrace.size()),
+                        maxTries = alternativeTraces;
+                        do {
+                                trace = new ArrayList<>(currentBestTrace);
+                                trace.set(r.nextInt(trace.size()),
                                         DistanceTracker.inputSymbols[r.nextInt(
                                                 DistanceTracker.inputSymbols.length)]);
-                                return null;
-                        };
-                        generateSpecificAlternative(alternativeTraces, func);
+                                maxTries--;
+                        } while (coveredTraces.contains(trace) && maxTries > 0);
+                        queue.add(trace);
+                        coveredTraces.add(trace);
 
-
-                        func = currTrace -> {
-                                currTrace = new ArrayList<>(currentBestTrace);
-                                currTrace.add(DistanceTracker.inputSymbols[r.nextInt(
+                        maxTries = alternativeTraces;
+                        do {
+                                trace = new ArrayList<>(currentBestTrace);
+                                trace.add(DistanceTracker.inputSymbols[r.nextInt(
                                         DistanceTracker.inputSymbols.length)]);
-                                return null;
-                        };
-                        generateSpecificAlternative(alternativeTraces, func);
+                                maxTries--;
+                        } while(coveredTraces.contains(trace) && maxTries > 0);
+                        queue.add(trace);
+                        coveredTraces.add(trace);
 
-
-                        func = currTrace -> {
-                                currTrace = new ArrayList<>(currentBestTrace);
+                        maxTries = alternativeTraces;
+                        do {
+                                trace = new ArrayList<>(currentBestTrace);
                                 // swap two elements
 
-                                int index1 = r.nextInt(currTrace.size());
-                                int index2 = r.nextInt(currTrace.size());
-                                String temp = currTrace.get(index1);
-                                currTrace.set(index1, currTrace.get(index2));
-                                currTrace.set(index2, temp);
-                                return null;
-                        };
-                        generateSpecificAlternative(alternativeTraces, func);
+                                int index1 = r.nextInt(trace.size());
+                                int index2 = r.nextInt(trace.size());
+                                String temp = trace.get(index1);
+                                trace.set(index1, trace.get(index2));
+                                trace.set(index2, temp);
+                                maxTries--;
+                        } while(coveredTraces.contains(trace) && maxTries > 0);
+                        queue.add(trace);
+                        coveredTraces.add(trace);
 
-                        func = currTrace -> {
-                                currTrace = new ArrayList<>(currentBestTrace);
-                                Collections.shuffle(currTrace);
-                                return null;
-                        };
-                        generateSpecificAlternative(alternativeTraces, func);
-
+                        maxTries = alternativeTraces;
+                        do {
+                                trace = new ArrayList<>(currentBestTrace);
+                                Collections.shuffle(trace);
+                                maxTries--;
+                        } while (coveredTraces.contains(trace) && maxTries > 0);
+                        queue.add(trace);
+                        coveredTraces.add(trace);
                 }
 
         }
@@ -413,7 +400,6 @@ public class FuzzingLab {
         static class DiscoveredBranch {
                 private final int line_nr;
                 private final double branchDistance;
-
                 private final boolean condition;
 
                 DiscoveredBranch(int line_nr, boolean condition, double branchDistance) {
@@ -426,13 +412,6 @@ public class FuzzingLab {
                         return this.branchDistance;
                 }
 
-                @Override
-                public boolean equals(Object obj) {
-                        if (obj instanceof DiscoveredBranch) {
-                                return this.line_nr == ((DiscoveredBranch) obj).line_nr
-                                        && this.condition == ((DiscoveredBranch)obj).condition;
-                        }
-                        return false;
-                }
         }
 }
+
