@@ -213,6 +213,7 @@ public class FuzzingLab {
                         for (int i = 0; i < traceLength; i++) {
                                 trace.add(symbols[r.nextInt(symbols.length)]);
                         }
+                        System.out.println("generating random trace");
                 } while (coveredTraces.contains(trace));
                 coveredTraces.add(trace);
                 return trace;
@@ -321,7 +322,7 @@ public class FuzzingLab {
          * Generate mutations based on the current best trace.
          */
         private static void generateAlternatives() {
-                int alternativeTraces = DistanceTracker.inputSymbols.length * 2;
+                int alternativeTraces = DistanceTracker.inputSymbols.length;
                 for(int i =0; i<alternativeTraces; i++){
                         System.out.println("generating new traces");
                         List<String> trace;
@@ -368,38 +369,7 @@ public class FuzzingLab {
                         queue.add(trace);
                         coveredTraces.add(trace);
                 }
-                /*
-                for (int i = 0; i < 20; i++) {
-                        List<String> trace = new ArrayList<>(currentBestTrace);
-                        int choice = r.nextInt(5);
-                        switch (choice) {
-                                case 0:
-                                        trace.remove(r.nextInt(currentBestTrace.size()));
-                                        break;
-                                case 1:
-                                        trace.set(r.nextInt(trace.size()),
-                                                        DistanceTracker.inputSymbols[r.nextInt(
-                                                                        DistanceTracker.inputSymbols.length)]);
-                                        break;
-                                case 2:
-                                        trace.add(DistanceTracker.inputSymbols[r.nextInt(
-                                                        DistanceTracker.inputSymbols.length)]);
-                                        break;
-                                case 3:
-                                        // swap two elements
-                                        int index1 = r.nextInt(trace.size());
-                                        int index2 = r.nextInt(trace.size());
-                                        String temp = trace.get(index1);
-                                        trace.set(index1, trace.get(index2));
-                                        trace.set(index2, temp);
-                                        break;
-                                case 4:
-                                        // shuffle
-                                        Collections.shuffle(trace);
-                                        break;
-                        }
-                        queue.add(trace);
-                }*/
+
         }
 
         private static double getAverageDistance() {
