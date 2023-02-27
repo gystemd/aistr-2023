@@ -326,30 +326,37 @@ public class FuzzingLab {
                 for(int i =0; i<alternativeTraces; i++){
                         System.out.println("generating new traces");
                         List<String> trace;
+                        int maxTries = alternativeTraces;
                         do {
                                 trace = new ArrayList<>(currentBestTrace);
                                 trace.remove(r.nextInt(currentBestTrace.size()));
-                        } while (coveredTraces.contains(trace));
+                                maxTries--;
+                        } while (coveredTraces.contains(trace) && maxTries > 0);
                         queue.add(trace);
                         coveredTraces.add(trace);
 
+                        maxTries = alternativeTraces;
                         do {
                                 trace = new ArrayList<>(currentBestTrace);
                                 trace.set(r.nextInt(trace.size()),
                                         DistanceTracker.inputSymbols[r.nextInt(
                                                 DistanceTracker.inputSymbols.length)]);
-                        } while (coveredTraces.contains(trace));
+                                maxTries--;
+                        } while (coveredTraces.contains(trace) && maxTries > 0);
                         queue.add(trace);
                         coveredTraces.add(trace);
 
+                        maxTries = alternativeTraces;
                         do {
                                 trace = new ArrayList<>(currentBestTrace);
                                 trace.add(DistanceTracker.inputSymbols[r.nextInt(
                                         DistanceTracker.inputSymbols.length)]);
-                        } while(coveredTraces.contains(trace));
+                                maxTries--;
+                        } while(coveredTraces.contains(trace) && maxTries > 0);
                         queue.add(trace);
                         coveredTraces.add(trace);
 
+                        maxTries = alternativeTraces;
                         do {
                                 trace = new ArrayList<>(currentBestTrace);
                                 // swap two elements
@@ -359,13 +366,17 @@ public class FuzzingLab {
                                 String temp = trace.get(index1);
                                 trace.set(index1, trace.get(index2));
                                 trace.set(index2, temp);
-                        } while(coveredTraces.contains(trace));
+                                maxTries--;
+                        } while(coveredTraces.contains(trace) && maxTries > 0);
                         queue.add(trace);
                         coveredTraces.add(trace);
+
+                        maxTries = alternativeTraces;
                         do {
                                 trace = new ArrayList<>(currentBestTrace);
                                 Collections.shuffle(trace);
-                        } while (coveredTraces.contains(trace));
+                                maxTries--;
+                        } while (coveredTraces.contains(trace) && maxTries > 0);
                         queue.add(trace);
                         coveredTraces.add(trace);
                 }
@@ -393,10 +404,10 @@ public class FuzzingLab {
         }
 
         static class DiscoveredBranch {
-                private int line_nr;
-                private double branchDistance;
+                private final int line_nr;
+                private final double branchDistance;
 
-                private boolean condition;
+                private final boolean condition;
 
                 DiscoveredBranch(int line_nr, boolean condition, double branchDistance) {
                         this.line_nr = line_nr;
