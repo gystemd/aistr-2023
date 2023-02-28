@@ -1,10 +1,7 @@
 import matplotlib.pyplot as plt
-import numpy
-import numpy as np
 
-time_stamps = [i for i in range(1, 300000)]
 
-def parseInput(file):
+def parse_input(file):
     input = open(file).read().split("\n")
     error_input = list(filter(lambda i: "error_" in i, input))
 
@@ -22,11 +19,10 @@ def parseInput(file):
             unique_found = unique_found + 1
             dict[time] = unique_found
 
-# print(error_input.pop().split(':')[0])
+    # print(error_input.pop().split(':')[0])
     # print(dict)
     time_stamps = [i for i in range(1, int(error_input.pop().split(':')[0]))]
-    counts =  []
-
+    counts = []
 
     # print(time_stamps[:-1])
     last = 0
@@ -40,8 +36,8 @@ def parseInput(file):
     return (counts, time_stamps)
 
 
-(countsDumb, time_stamps_dumb) = parseInput("../logs/assignment1/dumb/Problem15.txt")
-(countsSmart, time_stamps_smart) = parseInput("../logs/assignment1/Problem15.txt")
+(countsDumb, time_stamps_dumb) = parse_input("../logs/assignment1/dumb/Problem15.txt")
+(countsSmart, time_stamps_smart) = parse_input("../logs/assignment1/Problem15.txt")
 # countsDumb = numpy.zeros(len(time_stamps_smart))
 plt.title("Error convergence Problem 15")
 plt.plot(time_stamps_dumb, countsDumb, "--", label="Random")
@@ -50,4 +46,3 @@ plt.xlabel("Time (ms)")
 plt.ylabel("Unique errors triggered")
 plt.legend()
 plt.show()
-

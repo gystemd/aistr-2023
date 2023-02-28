@@ -1,6 +1,8 @@
 package nl.tudelft.instrumentation.fuzzing;
 
 import java.util.*;
+import java.util.function.Function;
+
 import com.github.javaparser.utils.Pair;
 
 /**
@@ -312,67 +314,75 @@ public class FuzzingLab {
                 // randomFuzzer();
         }
 
+        private static void generateSpecificAlternative(int alternativeTraces,
+                                                        Function<List<String>, Object> run) {
+                int maxTries = alternativeTraces;
+                List<String> trace;
+                do {
+                        trace = new ArrayList<>(currentBestTrace);
+                        trace.remove(r.nextInt(currentBestTrace.size()));
+                        run.apply(trace);
+                        maxTries--;
+                } while (coveredTraces.contains(trace) && maxTries > 0);
+                queue.add(trace);
+                coveredTraces.add(trace);
+
+        }
+
         /**
          * Generate mutations based on the current best trace.
          */
         private static void generateAlternatives() {
                 int alternativeTraces = DistanceTracker.inputSymbols.length;
-                for(int i =0; i<alternativeTraces; i++){
+                for(int i =0; i<alternativeTraces; i++) {
                         System.out.println("generating new traces");
-                        List<String> trace;
-                        int maxTries = alternativeTraces;
-                        do {
-                                trace = new ArrayList<>(currentBestTrace);
-                                trace.remove(r.nextInt(currentBestTrace.size()));
-                                maxTries--;
-                        } while (coveredTraces.contains(trace) && maxTries > 0);
-                        queue.add(trace);
-                        coveredTraces.add(trace);
 
-                        maxTries = alternativeTraces;
-                        do {
-                                trace = new ArrayList<>(currentBestTrace);
-                                trace.set(r.nextInt(trace.size()),
+                        Function<List<String>, Object> func = currTrace -> {
+                                currTrace = new ArrayList<>(currentBestTrace);
+                                currTrace.remove(r.nextInt(currentBestTrace.size()));
+                                return null;
+                        };
+                        generateSpecificAlternative(alternativeTraces, func);
+
+
+                        func = currTrace -> {
+                                currTrace = new ArrayList<>(currentBestTrace);
+                                currTrace.set(r.nextInt(currTrace.size()),
                                         DistanceTracker.inputSymbols[r.nextInt(
                                                 DistanceTracker.inputSymbols.length)]);
-                                maxTries--;
-                        } while (coveredTraces.contains(trace) && maxTries > 0);
-                        queue.add(trace);
-                        coveredTraces.add(trace);
+                                return null;
+                        };
+                        generateSpecificAlternative(alternativeTraces, func);
 
-                        maxTries = alternativeTraces;
-                        do {
-                                trace = new ArrayList<>(currentBestTrace);
-                                trace.add(DistanceTracker.inputSymbols[r.nextInt(
+
+                        func = currTrace -> {
+                                currTrace = new ArrayList<>(currentBestTrace);
+                                currTrace.add(DistanceTracker.inputSymbols[r.nextInt(
                                         DistanceTracker.inputSymbols.length)]);
-                                maxTries--;
-                        } while(coveredTraces.contains(trace) && maxTries > 0);
-                        queue.add(trace);
-                        coveredTraces.add(trace);
+                                return null;
+                        };
+                        generateSpecificAlternative(alternativeTraces, func);
 
-                        maxTries = alternativeTraces;
-                        do {
-                                trace = new ArrayList<>(currentBestTrace);
+
+                        func = currTrace -> {
+                                currTrace = new ArrayList<>(currentBestTrace);
                                 // swap two elements
 
-                                int index1 = r.nextInt(trace.size());
-                                int index2 = r.nextInt(trace.size());
-                                String temp = trace.get(index1);
-                                trace.set(index1, trace.get(index2));
-                                trace.set(index2, temp);
-                                maxTries--;
-                        } while(coveredTraces.contains(trace) && maxTries > 0);
-                        queue.add(trace);
-                        coveredTraces.add(trace);
+                                int index1 = r.nextInt(currTrace.size());
+                                int index2 = r.nextInt(currTrace.size());
+                                String temp = currTrace.get(index1);
+                                currTrace.set(index1, currTrace.get(index2));
+                                currTrace.set(index2, temp);
+                                return null;
+                        };
+                        generateSpecificAlternative(alternativeTraces, func);
 
-                        maxTries = alternativeTraces;
-                        do {
-                                trace = new ArrayList<>(currentBestTrace);
-                                Collections.shuffle(trace);
-                                maxTries--;
-                        } while (coveredTraces.contains(trace) && maxTries > 0);
-                        queue.add(trace);
-                        coveredTraces.add(trace);
+                        func = currTrace -> {
+                                currTrace = new ArrayList<>(currentBestTrace);
+                                Collections.shuffle(currTrace);
+                                return null;
+                        };
+                        generateSpecificAlternative(alternativeTraces, func);
                 }
 
         }
