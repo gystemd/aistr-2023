@@ -7,7 +7,7 @@ java -cp target/aistr.jar nl.tudelft.instrumentation.Main --type=symbolic --file
 
 echo "Compiling"
 
-javac -cp target/aistr.jar:lib/com.microsoft.z3.jar:. Erros.java instrumented/"$1".java
+javac -cp target/aistr.jar:lib/com.microsoft.z3.jar:. Errors.java instrumented/"$1".java
 
 # javac -cp target/aistr.jar:. Errors.java instrumented/"$1".java
 

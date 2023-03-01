@@ -38,40 +38,84 @@ public class SymbolicExecutionLab {
 
     static MyVar createInput(String name, Expr value, Sort s){
         // Create an input var, these should be free variables!
+        // TODO what to do here?
         return new MyVar(PathTracker.ctx.mkString(""));
     }
 
     static MyVar createBoolExpr(BoolExpr var, String operator){
         // Any unary expression (!)
-        return new MyVar(PathTracker.ctx.mkFalse());
+        Context ctx = PathTracker.ctx;
+        if (operator.equals("!")) {
+            return new MyVar(ctx.mkNot(var));
+        }
+        throw new IllegalArgumentException("Unknown boolean operator " + operator);
     }
 
     static MyVar createBoolExpr(BoolExpr left_var, BoolExpr right_var, String operator){
         // Any binary expression (&, &&, |, ||)
-        return new MyVar(PathTracker.ctx.mkFalse());
+        Context ctx = PathTracker.ctx;
+        switch (operator) {
+            case "&": // Should there be a difference between & and &&?
+            case "&&":
+                return new MyVar(ctx.mkAnd(left_var, right_var));
+            case "|": // Should there be a difference between | and ||??
+            case "||":
+                return new MyVar(ctx.mkOr(left_var, right_var));
+            default:
+                throw new IllegalArgumentException("Unknown boolean expression operator" + operator);
+
+        }
     }
 
-    static MyVar createIntExpr(IntExpr var, String operator){
+    static MyVar createIntExpr(IntExpr var, String operator) {
         // Any unary expression (+, -)
-        if(operator.equals("+") || operator.equals("-"))
-            return new MyVar(PathTracker.ctx.mkInt(0));
-        return new MyVar(PathTracker.ctx.mkFalse());
+        Context ctx = PathTracker.ctx;
+        switch (operator) {
+            case "+":
+                return new MyVar(var);
+            case "-":
+                return new MyVar(ctx.mkUnaryMinus(var));
+            default:
+                throw new IllegalArgumentException("Unknown int operator: " + operator);
+
+        }
     }
 
     static MyVar createIntExpr(IntExpr left_var, IntExpr right_var, String operator){
-        // Any binary expression (+, -, /, etc)
-        if(operator.equals("+") || operator.equals("-") || operator.equals("/") || operator.equals("*") || operator.equals("%") || operator.equals("^"))
-            return new MyVar(PathTracker.ctx.mkInt(0));
-        return new MyVar(PathTracker.ctx.mkFalse());
+        // Any binary expression (+, -, /, *, %, ^)
+        Context ctx = PathTracker.ctx;
+        switch (operator) {
+            case "+": return new MyVar(ctx.mkAdd(left_var, right_var));
+            case "-": return new MyVar(ctx.mkSub(left_var, right_var));
+            case "/": return new MyVar(ctx.mkDiv(left_var, right_var));
+            case "*": return new MyVar(ctx.mkMul(left_var, right_var));
+            case "%": return new MyVar(ctx.mkMod(left_var, right_var));
+            case "^": return new MyVar(ctx.mkPower(left_var, right_var));
+            case "==": return new MyVar(ctx.mkEq(left_var, right_var));
+            case "!=": return new MyVar(ctx.mkNot(ctx.mkEq(left_var, right_var)));
+            case ">": return new MyVar(ctx.mkGt(left_var, right_var));
+            case ">=": return new MyVar(ctx.mkGe(left_var, right_var));
+            case "<": return new MyVar(ctx.mkLt(left_var, right_var));
+            case "<=": return new MyVar(ctx.mkLe(left_var, right_var));
+            default:
+                throw new IllegalArgumentException("Unknown int operator: " + operator);
+        }
     }
 
     static MyVar createStringExpr(SeqExpr left_var, SeqExpr right_var, String operator){
         // We only support String.equals
-        return new MyVar(PathTracker.ctx.mkFalse());
+        if (operator.equals("==")) {
+            return new MyVar(PathTracker.ctx.mkEq(left_var, right_var));
+        }
+        throw new IllegalArgumentException("Unknown string expression: " + operator);
     }
 
     static void assign(MyVar var, String name, Expr value, Sort s){
         // All variable assignments, use single static assignment
+        // Create a new var
+        var.z3var = PathTracker.ctx.mkConst(name + "-"  + PathTracker.z3counter, s);
+        // Add var to the current model
+        PathTracker.addToModel(PathTracker.ctx.mkEq(var.z3var, value));
     }
 
     static void encounteredNewBranch(MyVar condition, boolean value, int line_nr){
