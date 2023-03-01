@@ -18,14 +18,19 @@ public class FuzzingLab {
 
         static Set<Pair<Integer, Boolean>> uniqueVisitedBranches = new HashSet<>();
         static Set<Integer> currentTraceBranches = new HashSet<>();
+        static double currentBranchDistanceSum = 0;
+        static int currentBranchCount = 0;
+
+        static Set<DiscoveredBranch> visitedBranches = new HashSet<>();
+
+        // keep tracked of the branches that have been visited in the current trace
+        static Set<Pair<Integer, Boolean>> currentTraceVisitedBranches = new HashSet<>();
 
         /* keep track of the errors that have been found */
         static Set<String> errors = new HashSet<>();
 
-        static List<DiscoveredBranch> visitedBranches;
-
         static double currentSmallestDistance = Double.MAX_VALUE;
-        private static final Queue<List<String>> queue = new LinkedList<>();
+        private static final Queue<List<String>> mutationsQueue = new LinkedList<>();
 
         private static final Set<List<String>> coveredTraces = new HashSet<>();
 
@@ -34,7 +39,6 @@ public class FuzzingLab {
         static void initialize(String[] inputSymbols) {
                 // Initialise a random trace from the input symbols of the problem.
                 currentTrace = generateRandomTrace(inputSymbols);
-                visitedBranches = new ArrayList<>();
         }
 
         /**
@@ -88,6 +92,7 @@ public class FuzzingLab {
                                 return computeDistanceNotEqual(condition);
                         // a < b : d = {0 if a < b; a-b + K otherwise}
                         case "<":
+                                // Let k be 1 for now? Can we optimize this?
                                 return condition.left.int_value < condition.right.int_value ? 0.0
                                                 : condition.left.int_value
                                                                 - condition.right.int_value + 1;
@@ -222,7 +227,7 @@ public class FuzzingLab {
                 Map<List<String>, Double> traces = new HashMap<>();
                 initialize(DistanceTracker.inputSymbols);
                 DistanceTracker.runNextFuzzedSequence(currentTrace.toArray(new String[0]));
-                currentSmallestDistance = getAverageDistance(); // Calculate average distance
+                currentSmallestDistance = currentBranchDistanceSum / currentBranchCount;
                 traces.put(currentTrace, currentSmallestDistance);
                 coveredTraces.add(currentTrace);
                 currentBestTrace = currentTrace;
@@ -253,13 +258,16 @@ public class FuzzingLab {
                         // Calculate mutations
                         generateAlternatives();
 
-                        while (!queue.isEmpty()) {
-                                visitedBranches.clear();
-                                currentTrace = queue.poll();
+                        while (!mutationsQueue.isEmpty()) {
+                                currentBranchCount = 0;
+                                currentBranchDistanceSum = 0;
+                                currentTrace = mutationsQueue.poll();
+
                                 System.out.println("Current trace: " + currentTrace);
                                 DistanceTracker.runNextFuzzedSequence(
                                                 currentTrace.toArray(new String[0]));
                                 double distance = getAverageDistance();
+
                                 traces.put(currentTrace, distance);
                                 coveredTraces.add(currentTrace);
                                 if (distance < currentSmallestDistance) {
@@ -287,7 +295,6 @@ public class FuzzingLab {
         static void randomFuzzer() {
                 int max = 0;
 
-                /* repeat for 5 minutes */
                 startTime = System.currentTimeMillis();
                 while (System.currentTimeMillis() - startTime < randomTimer) {
                         System.out.println("Current trace: " + currentTrace);
@@ -295,11 +302,11 @@ public class FuzzingLab {
                         initialize(DistanceTracker.inputSymbols);
                         DistanceTracker.runNextFuzzedSequence(currentTrace.toArray(new String[0]));
 
-                        if (currentTraceBranches.size() > max) {
-                                max = currentTraceBranches.size();
+                        if (currentTraceVisitedBranches.size() > max) {
+                                max = currentTraceVisitedBranches.size();
                                 currentBestTrace = currentTrace;
                         }
-                        currentTraceBranches = new HashSet<>();
+                        currentTraceVisitedBranches.clear();
                 }
 
                 System.out.println("global number of distinct branches activated: "
@@ -324,9 +331,8 @@ public class FuzzingLab {
                         run.apply(trace);
                         maxTries--;
                 } while (coveredTraces.contains(trace) && maxTries > 0);
-                queue.add(trace);
+                mutationsQueue.add(trace);
                 coveredTraces.add(trace);
-
         }
 
         /**
