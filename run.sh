@@ -13,6 +13,6 @@ javac -cp target/aistr.jar:lib/com.microsoft.z3.jar:. Errors.java instrumented/"
 
 echo "Running"
 
-java -cp target/aistr.jar:lib/com.microsoft.z3.jar:./instrumented "$1"
+java -cp target/aistr.jar:lib/com.microsoft.z3.jar:./instrumented:. "$1"
 
-rm $1.java
+rm "$1".java
