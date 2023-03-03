@@ -969,7 +969,7 @@ public  void calculateOutput(String input) {
     	if(((a168638684 == 15) && cf)) {
     		calculateOutputm40(input);
     	} 
-    }
+    } 
     if(((a1537379265 == 15) && cf)) {
     	if(((a1304806974.equals("e")) && cf)) {
     		calculateOutputm41(input);
