@@ -1,4 +1,6 @@
 package nl.tudelft.instrumentation.patching;
+import sun.tools.jstat.Jstat;
+
 import java.util.*;
 
 public class PatchingLab {
@@ -10,8 +12,13 @@ public class PatchingLab {
 
         static Map<Integer, Double> scoreForLine = new HashMap<>();
 
+        static String[] operators;
+        static String[] allOperators  = new String[]{"==", "!=", "<", "<=", ">", ">="};
+
         static void initialize(){
                 // initialize the population based on OperatorTracker.operators
+                operators = OperatorTracker.operators;
+
         }
 
         // encounteredOperator gets called for each operator encountered while running tests
@@ -52,20 +59,16 @@ public class PatchingLab {
                 }
         }
 
-        static void run() {
-                initialize();
+        static void resetCoverage() {
+                lineTouchedByTest = new HashMap<>();
+        }
 
-                // Place the code here you want to run once:
-                // You want to change this of course, this is just an example
-                // Tests are loaded from resources/rers2020_test_cases. If you are you are using
-                // your own tests, make sure you put them in the same folder with the same
-                // naming convention.
-                List<Boolean> testResults = OperatorTracker.runAllTests();
+        static void calculateScore(List<Boolean> testResults) {
+
                 double numberOfTests = testResults.size();
                 double totalPassed = testResults.stream().filter(i -> i).count();
                 double totalFailed = testResults.stream().filter(i -> !i).count();
                 System.out.println("Number of tests: " + numberOfTests);
-                System.out.println("Entered run");
                 lineTouchedByTest.forEach((line, tests) -> {
                         int passed = 0;
                         int failed = 0;
@@ -82,16 +85,38 @@ public class PatchingLab {
                         scoreForLine.put(line, score);
                 });
                 System.out.println(scoreForLine);
+                System.out.println("Number of failed tests: " + totalFailed);
+        }
+
+        static void doMutation() {
+                // Get to the id of the operation with the highest score
+                int operator_nr =
+                        scoreForLine.entrySet().stream()
+                                .max((entry1, entry2) -> (int) ((entry1.getValue() - entry2.getValue()) * 1000)).get().getKey();
+
+                String mutation = allOperators[r.nextInt(allOperators.length-1)];
+                operators[operator_nr] = mutation;
+        }
+
+        static void run() {
+                initialize();
+                List<Boolean> testResults = OperatorTracker.runAllTests();
+                calculateScore(testResults);
+
+                // Place the code here you want to run once:
+                // You want to change this of course, this is just an example
+                // Tests are loaded from resources/rers2020_test_cases. If you are you are using
+                // your own tests, make sure you put them in the same folder with the same
+                // naming convention.
+
 
                 // Loop here, running your genetic algorithm until you think it is done
                 while (!isFinished) {
-                        // Do things!
-                        try {
-                                System.out.println("Woohoo, looping!");
-                                Thread.sleep(1000);
-                        } catch (InterruptedException e) {
-                                e.printStackTrace();
-                        }
+                        doMutation();
+                        resetCoverage();
+                        testResults = OperatorTracker.runAllTests();
+                        calculateScore(testResults);
+
                 }
         }
 
