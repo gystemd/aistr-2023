@@ -1,7 +1,7 @@
 package nl.tudelft.instrumentation.patching;
-import sun.tools.jstat.Jstat;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class PatchingLab {
 
@@ -12,12 +12,14 @@ public class PatchingLab {
 
         static Map<Integer, Double> scoreForLine = new HashMap<>();
 
-        static String[] operators;
-        static String[] allOperators  = new String[]{"==", "!=", "<", "<=", ">", ">="};
+        static List<String> operators;
+        static List<String> allOperators  = List.of("==", "!=", "<", "<=", ">", ">=");
+
+        static Queue<List<String>> operatorQueue = new LinkedList<>();
 
         static void initialize(){
                 // initialize the population based on OperatorTracker.operators
-                operators = OperatorTracker.operators;
+                operators = Arrays.asList(OperatorTracker.operators);
 
         }
 
@@ -26,7 +28,7 @@ public class PatchingLab {
                 updateCoverage(operator_nr);
 
 
-                String replacement = OperatorTracker.operators[operator_nr];
+                String replacement = operators.get(operator_nr);
                 if(replacement.equals("!=")) return left != right;
                 if(replacement.equals("==")) return left == right;
                 if(replacement.equals("<")) return left < right;
@@ -41,7 +43,7 @@ public class PatchingLab {
                 updateCoverage(operator_nr);
 
 
-                String replacement = OperatorTracker.operators[operator_nr];
+                String replacement = operators.get(operator_nr);
                 if(replacement.equals("!=")) return left != right;
                 if(replacement.equals("==")) return left == right;
                 return false;
@@ -63,7 +65,7 @@ public class PatchingLab {
                 lineTouchedByTest = new HashMap<>();
         }
 
-        static void calculateScore(List<Boolean> testResults) {
+        static double calculateScore(List<Boolean> testResults) {
 
                 double numberOfTests = testResults.size();
                 double totalPassed = testResults.stream().filter(i -> i).count();
@@ -86,16 +88,22 @@ public class PatchingLab {
                 });
                 System.out.println(scoreForLine);
                 System.out.println("Number of failed tests: " + totalFailed);
+                return totalFailed;
         }
 
         static void doMutation() {
                 // Get to the id of the operation with the highest score
-                int operator_nr =
+                Map.Entry<Integer, Double> operator_nr =
                         scoreForLine.entrySet().stream()
-                                .max((entry1, entry2) -> (int) ((entry1.getValue() - entry2.getValue()) * 1000)).get().getKey();
+                                .max((entry1, entry2) -> (int) ((entry1.getValue() - entry2.getValue()) * 1000)).get();
 
-                String mutation = allOperators[r.nextInt(allOperators.length-1)];
-                operators[operator_nr] = mutation;
+                List<String> mutations =
+                        allOperators.stream().filter(el -> el.equals(operators.get(operator_nr.getKey()))).collect(Collectors.toList());
+                mutations.forEach(el -> {
+                        List<String> newOperator = new ArrayList<>(operators);
+                        newOperator.add(operator_nr.getKey(), el);
+                        operatorQueue.add(newOperator);
+                });
         }
 
         static void run() {
@@ -114,9 +122,19 @@ public class PatchingLab {
                 while (!isFinished) {
                         doMutation();
                         resetCoverage();
+                        Map<List<String>, Double> operatorScore = new HashMap<>();
+                        while (!operatorQueue.isEmpty()) {
+                                operators = operatorQueue.poll();
+                                resetCoverage();
+                                testResults = OperatorTracker.runAllTests();
+                                double score = calculateScore(testResults);
+                                operatorScore.put(operators, score);
+                        }
+                        operators = operatorScore.entrySet().stream()
+                                .min((entry1, entry2) -> (int) ((entry1.getValue() - entry2.getValue()) * 1000)).get().getKey();
+                        resetCoverage();
                         testResults = OperatorTracker.runAllTests();
                         calculateScore(testResults);
-
                 }
         }
 
