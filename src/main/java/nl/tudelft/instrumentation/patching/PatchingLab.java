@@ -62,8 +62,9 @@ public class PatchingLab {
                 // naming convention.
                 List<Boolean> testResults = OperatorTracker.runAllTests();
                 double numberOfTests = testResults.size();
+                double totalPassed = testResults.stream().filter(i -> i).count();
+                double totalFailed = testResults.stream().filter(i -> !i).count();
                 System.out.println("Number of tests: " + numberOfTests);
-//                System.out.println(lineTouchedByTest);
                 System.out.println("Entered run");
                 lineTouchedByTest.forEach((line, tests) -> {
                         int passed = 0;
@@ -76,8 +77,8 @@ public class PatchingLab {
                                 }
                         }
                         double score =
-                                ((double) failed / numberOfTests) /
-                                        (((double) failed / numberOfTests) + ((double) passed / numberOfTests));
+                                ((double) failed / totalFailed) /
+                                        (((double) failed / totalFailed) + ((double) passed / totalPassed));
                         scoreForLine.put(line, score);
                 });
                 System.out.println(scoreForLine);
