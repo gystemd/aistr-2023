@@ -13,52 +13,55 @@ public class PatchingLab {
         static Map<Integer, Double> scoreForLine = new HashMap<>();
 
         static List<String> operators;
-        static List<String> allOperators  = List.of("==", "!=", "<", "<=", ">", ">=");
+        static List<String> allOperators = List.of("==", "!=", "<", "<=", ">", ">=");
 
         static Queue<List<String>> operatorQueue = new LinkedList<>();
 
-        static void initialize(){
+        static void initialize() {
                 // initialize the population based on OperatorTracker.operators
                 operators = Arrays.asList(OperatorTracker.operators);
 
         }
 
         // encounteredOperator gets called for each operator encountered while running tests
-        static boolean encounteredOperator(String operator, int left, int right, int operator_nr){
+        static boolean encounteredOperator(String operator, int left, int right, int operator_nr) {
                 updateCoverage(operator_nr);
 
 
                 String replacement = operators.get(operator_nr);
-                if(replacement.equals("!=")) return left != right;
-                if(replacement.equals("==")) return left == right;
-                if(replacement.equals("<")) return left < right;
-                if(replacement.equals(">")) return left > right;
-                if(replacement.equals("<=")) return left <= right;
-                if(replacement.equals(">=")) return left >= right;
+                if (replacement.equals("!="))
+                        return left != right;
+                if (replacement.equals("=="))
+                        return left == right;
+                if (replacement.equals("<"))
+                        return left < right;
+                if (replacement.equals(">"))
+                        return left > right;
+                if (replacement.equals("<="))
+                        return left <= right;
+                if (replacement.equals(">="))
+                        return left >= right;
                 return false;
         }
 
-        static boolean encounteredOperator(String operator, boolean left, boolean right, int operator_nr){
+        static boolean encounteredOperator(String operator, boolean left, boolean right,
+                        int operator_nr) {
                 // Do something useful
                 updateCoverage(operator_nr);
 
 
                 String replacement = operators.get(operator_nr);
-                if(replacement.equals("!=")) return left != right;
-                if(replacement.equals("==")) return left == right;
+                if (replacement.equals("!="))
+                        return left != right;
+                if (replacement.equals("=="))
+                        return left == right;
                 return false;
         }
 
         static void updateCoverage(int operator_nr) {
                 // The tests which touched this operator (operator_nr)
-                Set<Integer> touchedByTest = new HashSet<>();
-                touchedByTest.add(OperatorTracker.current_test);
-                if (lineTouchedByTest.containsKey(operator_nr)) {
-                        touchedByTest.addAll(lineTouchedByTest.get(operator_nr));
-                        lineTouchedByTest.replace(operator_nr, touchedByTest);
-                } else {
-                        lineTouchedByTest.put(operator_nr, touchedByTest);
-                }
+                lineTouchedByTest.computeIfAbsent(operator_nr, k -> new HashSet<>())
+                                .add(OperatorTracker.current_test);
         }
 
         static void resetCoverage() {
@@ -81,9 +84,9 @@ public class PatchingLab {
                                         failed++;
                                 }
                         }
-                        double score =
-                                ((double) failed / totalFailed) /
-                                        (((double) failed / totalFailed) + ((double) passed / totalPassed));
+                        double score = ((double) failed / totalFailed)
+                                        / (((double) failed / totalFailed)
+                                                        + ((double) passed / totalPassed));
                         scoreForLine.put(line, score);
                 });
                 System.out.println(scoreForLine);
@@ -93,17 +96,14 @@ public class PatchingLab {
 
         static void doMutation() {
                 // Get to the id of the operation with the highest score
-                Map.Entry<Integer, Double> operator_nr =
-                        scoreForLine.entrySet().stream()
-                                .max((entry1, entry2) -> (int) ((entry1.getValue() - entry2.getValue()) * 1000)).get();
+                Map.Entry<Integer, Double> operator_nr = scoreForLine.entrySet().stream().max((
+                                entry1,
+                                entry2) -> (int) ((entry1.getValue() - entry2.getValue()) * 1000))
+                                .get();
 
-                List<String> mutations =
-                        allOperators.stream().filter(el -> el.equals(operators.get(operator_nr.getKey()))).collect(Collectors.toList());
-                mutations.forEach(el -> {
-                        List<String> newOperator = new ArrayList<>(operators);
-                        newOperator.add(operator_nr.getKey(), el);
-                        operatorQueue.add(newOperator);
-                });
+                List<String> newOperators = new ArrayList<>(operators);
+                newOperators.set(operator_nr.getKey(), allOperators.get(r.nextInt(6)));
+                operatorQueue.add(newOperators);
         }
 
         static void run() {
@@ -131,14 +131,16 @@ public class PatchingLab {
                                 operatorScore.put(operators, score);
                         }
                         operators = operatorScore.entrySet().stream()
-                                .min((entry1, entry2) -> (int) ((entry1.getValue() - entry2.getValue()) * 1000)).get().getKey();
+                                        .min((entry1, entry2) -> (int) ((entry1.getValue()
+                                                        - entry2.getValue()) * 1000))
+                                        .get().getKey();
                         resetCoverage();
                         testResults = OperatorTracker.runAllTests();
                         calculateScore(testResults);
                 }
         }
 
-        public static void output(String out){
+        public static void output(String out) {
                 // This will get called when the problem code tries to print things,
                 // the prints in the original code have been removed for your convenience
 
