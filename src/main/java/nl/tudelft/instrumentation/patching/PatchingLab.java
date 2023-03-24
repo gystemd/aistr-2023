@@ -2,14 +2,17 @@ package nl.tudelft.instrumentation.patching;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import com.github.javaparser.utils.Pair;
+import com.google.common.collect.Streams;
 
 public class PatchingLab {
 
         static Random r = new Random();
         static boolean isFinished = false;
-
+        static List<Pair<List<String>, Double>> best = new ArrayList<>();
         static Map<Integer, Set<Integer>> operatorTouchedByTest = new HashMap<>();
 
+        static Map<Integer, String> operatorType = new HashMap<>();
         static List<String> operators;
         static List<String> allOperators = List.of("==", "!=", "<", "<=", ">", ">=");
 
@@ -24,6 +27,7 @@ public class PatchingLab {
         static boolean encounteredOperator(String operator, int left, int right, int operator_nr) {
                 operatorTouchedByTest.computeIfAbsent(operator_nr, k -> new HashSet<>())
                                 .add(OperatorTracker.current_test);
+                operatorType.putIfAbsent(operator_nr, "integer");
 
                 String replacement = operators.get(operator_nr);
                 if (replacement.equals("!="))
@@ -45,6 +49,7 @@ public class PatchingLab {
                         int operator_nr) {
                 operatorTouchedByTest.computeIfAbsent(operator_nr, k -> new HashSet<>())
                                 .add(OperatorTracker.current_test);
+                operatorType.putIfAbsent(operator_nr, "boolean");
 
                 String replacement = operators.get(operator_nr);
                 if (replacement.equals("!="))
@@ -89,17 +94,24 @@ public class PatchingLab {
                 System.out.println("initial operators size: " + operators.size());
                 List<Boolean> testResults = OperatorTracker.runAllTests();
                 Map<Integer, Double> scores = tarantulaScore(testResults, operatorTouchedByTest);
+                System.out.println("Initial fitness"
+                                + (double) testResults.stream().filter(i -> i).count()
+                                                / testResults.size());
 
                 // mutate the 10 operators with the highest score to produce the initial population
-                List<Integer> top = scores.entrySet().stream().sorted((entry1,
-                                entry2) -> (int) ((entry2.getValue() - entry1.getValue()) * 1000))
-                                .limit(10).map(Map.Entry::getKey).collect(Collectors.toList());
-
-                for (int i = 0; i < top.size(); i++) {
+                List<Integer> top = scores.entrySet().stream()
+                                .sorted((entry1, entry2) -> Double.compare(entry2.getValue(),
+                                                entry1.getValue()))
+                                .filter(en -> en.getValue() != 0).limit(200).map(Map.Entry::getKey)
+                                .collect(Collectors.toList());
+                //
+                // for (int j = 0; j < 10; j++) {
+                for (Integer integer : top) {
                         List<String> newOperators = new ArrayList<>(operators);
-                        newOperators.set(top.get(i), allOperators.get(r.nextInt(6)));
+                        newOperators.set(integer, allOperators.get(r.nextInt(6)));
                         parents.add(newOperators);
                 }
+                // }
 
                 // Place the code here you want to run once:
                 // You want to change this of course, this is just an example
@@ -110,10 +122,11 @@ public class PatchingLab {
 
                 // Loop here, running your genetic algorithm until you think it is done
                 while (!isFinished) {
-                        System.out.println("new generation");
+                        System.out.println("new cycle");
 
                         Map<List<String>, Double> passedTests = new HashMap<>();
-                        System.out.println("parents");
+                        // Run the tests with each parent.
+                        double fitnessSum = 0;
                         for (List<String> parent : parents) {
                                 resetCoverage();
                                 operators = parent;
@@ -122,56 +135,113 @@ public class PatchingLab {
                                                 (double) testResults.stream().filter(i -> i).count()
                                                                 / testResults.size());
                                 System.out.println("fitness value: " + passedTests.get(parent));
+                                fitnessSum += passedTests.get(parent);
                         }
+                        System.out.println("Fitness average " + fitnessSum / passedTests.size());
 
-                        // tournament selection based on number of passed tests
-                        List<List<String>> selected = new ArrayList<>();
-                        for (int i = 0; i < 10; i++) {
-                                // pick two random parents
+
+                        /* keep the individuals with the highest fitness */
+                        List<List<String>> theBestResults = passedTests.entrySet().stream()
+                                        .sorted((e1, e2) -> Double.compare(e2.getValue(),
+                                                        e1.getValue()))
+                                        .map(Map.Entry::getKey).limit(8)
+                                        .collect(Collectors.toList());
+
+                        /* and add some random individuals with tournament selection */
+                        List<List<String>> randomList = new ArrayList<>();
+                        for (int i = 0; i < 20; i++) {
                                 List<String> parent1 = parents.stream()
                                                 .skip(r.nextInt(parents.size())).findFirst().get();
                                 List<String> parent2 = parents.stream()
                                                 .skip(r.nextInt(parents.size())).findFirst().get();
-                                // compare the number of passed tests
-                                selected.add(passedTests.get(parent1) >= passedTests.get(parent2)
-                                                ? parent1
-                                                : parent2);
+                                if (passedTests.get(parent1) > passedTests.get(parent2)) {
+                                        randomList.add(parent1);
+                                } else {
+                                        randomList.add(parent2);
+                                }
                         }
-
-                        // single point crossover
+                        /* perform crossover only among best individuals*/
                         List<List<String>> crossOvers = new ArrayList<>();
-                        for (int i = 0; i < 10; i++) {
-                                List<String> parent1 = selected.get(i);
-                                List<String> parent2 = selected.get((i + 1) % 10);
+                        for (int i = 0; i < theBestResults.size(); i++) {
+                                List<String> parent1 = theBestResults.get(i);
+                                List<String> parent2 =
+                                                theBestResults.get((i + 1) % theBestResults.size());
                                 int crossoverPoint = r.nextInt(parent1.size());
                                 List<String> crossover = new ArrayList<>();
+                                // Add one way crossover
                                 crossover.addAll(parent1.subList(0, crossoverPoint));
                                 crossover.addAll(parent2.subList(crossoverPoint, parent2.size()));
                                 crossOvers.add(crossover);
+                                // Otherway crossover
+                                List<String> crossover2 = new ArrayList<>();
+                                crossover2.addAll(parent2.subList(0, crossoverPoint));
+                                crossover2.addAll(parent1.subList(crossoverPoint, parent2.size()));
+                                crossOvers.add(crossover2);
                         }
 
-                        System.out.println("crossovers");
-                        // mutation
-                        passedTests.clear();
-                        parents.clear();
+                        /* and add some random crossover
+                        for (int i = 0; i < 15; i++){
+                                List<String> parent1 = randomList.stream()
+                                                .skip(r.nextInt(randomList.size())).findFirst().get();
+                                List<String> parent2 = theBestResults.stream()
+                                                .skip(r.nextInt(theBestResults.size())).findFirst().get();
+                                int crossoverPoint = r.nextInt(parent1.size());
+                                List<String> crossover = new ArrayList<>();
+                                // Add one way crossover
+                                crossover.addAll(parent1.subList(0, crossoverPoint));
+                                crossover.addAll(parent2.subList(crossoverPoint, parent2.size()));
+                                crossOvers.add(crossover);
+                                // Otherway crossover
+                                List<String> crossover2 = new ArrayList<>();
+                                crossover2.addAll(parent2.subList(0, crossoverPoint));
+                                crossover2.addAll(parent1.subList(crossoverPoint, parent2.size()));
+                                crossOvers.add(crossover2);
+
+                        }*/
+
+                        Set<List<String>> children = new HashSet<>();
                         for (List<String> crossOver : crossOvers) {
+                                /* recompute the tarantula score for each crossover */
                                 resetCoverage();
+                                passedTests.clear();
                                 operators = crossOver;
                                 testResults = OperatorTracker.runAllTests();
                                 scores = tarantulaScore(testResults, operatorTouchedByTest);
-                                Integer topS = scores
-                                                .entrySet().stream().sorted((entry1,
-                                                                entry2) -> (int) ((entry2.getValue()
-                                                                                - entry1.getValue())
-                                                                                * 1000))
-                                                .limit(1).map(Map.Entry::getKey).findFirst().get();
-                                List<String> newOperators2 = new ArrayList<>(crossOver);
-                                newOperators2.set(topS, allOperators.get(r.nextInt(6)));
-                                parents.add(newOperators2);
+
+                                List<Integer> topS = scores.entrySet().stream()
+                                                .sorted((entry1, entry2) -> Double.compare(
+                                                                entry2.getValue(),
+                                                                entry1.getValue()))
+                                                .limit(100).map(Map.Entry::getKey)
+                                                .collect(Collectors.toList());
+
+                                List<String> newOperators = new ArrayList<>(crossOver);
+                                children.add(typeSafeMutation(newOperators, topS.get(r.nextInt(topS.size()))));
+                                /*
+                                 * for (int i = 0; i < 10; i++) { int mutateIndex =
+                                 * r.nextInt(newOperators.size());
+                                 * children.add(typeSafeMutation(newOperators, mutateIndex));
+                                 * 
+                                 * }
+                                 */
                         }
-
-
+                        System.out.println("New population size: " + children.size());
+                        parents = new HashSet<>(children);
                 }
+        }
+
+        private static List<String> typeSafeMutation(List<String> newOperators, int mutateIndex) {
+                if (operatorType.getOrDefault(mutateIndex, "").equals("boolean")) {
+                        if (newOperators.get(mutateIndex).equals("==")) {
+                                newOperators.set(mutateIndex, "!=");
+                        } else {
+                                newOperators.set(mutateIndex, "==");
+                        }
+                } else {
+                        newOperators.set(mutateIndex,
+                                        allOperators.get(r.nextInt(allOperators.size())));
+                }
+                return newOperators;
         }
 
         public static void output(String out) {
